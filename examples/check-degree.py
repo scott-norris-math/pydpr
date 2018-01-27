@@ -4,12 +4,16 @@ import pydpr.pydpr as dpr
 from pydpr.degrees.Math import create_degree, autodetect_eng_specialization
 
 # basic setup info
-studentID = sys.argv[1]
-studentsfile = './records/current-mathmajors.xlsx'
+studentfile = './records/current-mathmajors.xlsx'
 coursesfile = './records/current-coursehistories.xlsx'
 
+# identify the student
+fragment = sys.argv[1]
+studentID = dpr.find_student(studentfile, fragment)
+
+
 # load student information, and identify precise degree type
-student = dpr.load_student_from_query(studentsfile, studentID)
+student = dpr.load_student_from_query(studentfile, studentID)
 courses = dpr.load_courses_from_query(coursesfile, studentID)
 autodetect_eng_specialization(student, courses)
 

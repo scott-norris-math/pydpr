@@ -39,7 +39,7 @@ STAT   = set( ['STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'ST
 PHYS   = set( ['PHYS 1403', 'PHYS 1404', 'PHYS 1301', 'PHYS 1303', 'PHYS 1304'] )
 CHEM   = set( ['CHEM 1303', 'CHEM 1304'] )
 BIOL   = set( ['BIOL 1401', 'BIOL 1402', 'BIOL 1301', 'BIOL 1302'] )
-GEOL   = set( ['GEOL 1301', 'GEOL 1305', 'GEOL 1307', 'GEOL 1313', 'GEOL 1315'] ) 
+GEOL   = set( ['GEOL 1301', 'GEOL 1305', 'GEOL 1307', 'GEOL 1313', 'GEOL 1315', 'GEOL 3340'] ) 
 SCI    = PHYS|CHEM|BIOL|GEOL
 
 CAL1   = set( ['MATH 1337', 'MATH 1309'] )
@@ -145,17 +145,12 @@ def create_degree(degcode, speccode):
     spec.add_requirement("Two ME", ['ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 7322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'], 2 )
     ENG4P = set(['ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'])
 
-  if speccode == 'ENG-CIV':
+  if speccode == 'ENG-CEE':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+", ['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'], 2)
-    spec.add_requirement("Two CIV", ['CEE 5361', 'CEE 5364', 'ME 5322', 'ME 7322', 'CEE 7361', 'CEE 7364'], 2 )
-    ENG4P = set(['CEE 5361', 'CEE 5364', 'ME 5322', 'ME 7322', 'CEE 7361', 'CEE 7364'])
 
-  if speccode == 'ENG-ENV':
-    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'], 2)
-    spec.add_requirement("Two ENV", ['ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332'], 2 )
-    ENG4P = set(['ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332'])
+    ENG4P = set(['ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'ME 5322', 'ME 7322', 'CEE 7361', 'CEE 7364'])
+    spec.add_requirement("Two CEE", list(ENG4P), 2)
 
 
   #adv.add_subreq( dpr.Requirement("Four from MATH", MATH3|MATH4P, 4))
@@ -187,10 +182,7 @@ def autodetect_eng_specialization(student, courselist):
     maxdep = max(set(depts), key=depts.count)
     if maxdep == 'ME':  student.speccode = 'ENG-ME'
     if maxdep == 'EE':  student.speccode = 'ENG-EE'
-    if maxdep == 'CEE':
-      codes = [a.code for a in courselist]
-      if 'CEE 2340' in codes:  student.speccode = 'ENG-CIV'
-      if 'CEE 2421' in codes:  student.speccode = 'ENG-ENV'
+    if maxdep == 'CEE':  student.speccode = 'ENG-CEE'
 
 
 

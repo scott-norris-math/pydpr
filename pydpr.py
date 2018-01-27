@@ -99,6 +99,54 @@ class MissingFileError(Error):
 This function reads $queryfile [which is assumed to be an XLSX file] looking for a given $studentID in column 0.  If the student ID is found, then demographic information is read from the row.  At the moment, the columns associated with each piece of information are hard-coded.  This could be set up in a configuration file if desired.
 """
 
+def find_student(studentfile, fragment):
+
+  # open the excel file
+  wb = load_workbook(studentfile)
+  ws = wb[wb.get_sheet_names()[0]]
+
+  # search for matches
+  matches = []
+  for jj,row in enumerate(ws):
+    ID    = str(row[0].value)
+    lname = str(row[2].value)
+    fname = str(row[3].value)
+    email = str(row[4].value)
+
+    fields = [ID, lname, fname, email]
+    for kk,ff in enumerate(fields):
+      pos = ff.lower().find(fragment)
+      if pos > -1:
+        matches.append(fields)
+        break
+
+  # if multiple matches
+  if len(matches) > 1:
+    for ii,match in enumerate(matches):
+      print('(%1d) [%s] "%s, %s" <%s>' % (ii+1, match[0], match[1], match[2], match[3]))
+    val = int(input("\nSelect a student: "))
+    if val > 0 and val <= len(matches): 
+      return matches[val-1][0]
+    else:
+      print ("Invalid entry.  Exiting.")
+      exit
+
+  # if just one match
+  if len(matches) == 1:
+    match = matches[0]
+    print('found: [%s] "%s, %s" <%s>' % (match[0], match[1], match[2], match[3]))    
+    return match[0]
+
+  # if no matches
+  print ("No matches not found.  Exiting.")
+  exit
+
+
+
+
+
+
+
 def load_student_from_query(queryfile, studentID):
 
   # read the list of students

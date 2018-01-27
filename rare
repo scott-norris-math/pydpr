@@ -1,0 +1,73 @@
+import sys
+
+# for reading XLSX files
+from openpyxl import load_workbook
+from colorama import init, Fore, Back, Style
+
+# for e-mailing
+from smtplib import SMTP_SSL, SMTPException
+from email.mime.text import MIMEText
+
+# for degree status
+import pydpr.pydpr as dpr
+from pydpr.degrees.Math import create_degree, autodetect_eng_specialization
+
+# files with student and course histories
+gradsfile   = './records/graduating-mathmajors.xlsx'
+studentfile = './records/current-mathmajors.xlsx'
+coursesfile = './records/current-coursehistories.xlsx'
+
+slist = []
+gradterm = sys.argv[1]
+
+wb = load_workbook(gradsfile, read_only=True)
+ws = wb[wb.get_sheet_names()[0]]
+for row in ws:
+  #if str(row[8].value) != str(gradterm):
+  #  continue
+
+  ID    = str(row[0].value)
+  lname = str(row[1].value)
+  fname = str(row[2].value)
+  email = str(row[3].value)
+
+  SMUgpa = float(row[16].value)
+
+
+  # load student information, and identify precise degree type
+  try:
+    student = dpr.load_student_from_query(studentfile, ID)
+    courses = dpr.load_courses_from_query(coursesfile, ID)
+    autodetect_eng_specialization(student, courses)
+  except dpr.MissingStudentError as mse:
+    print("Student ID %s not found in student file %s." % (ID, studentfile))
+    print("Skipping this student.")
+    continue
+  except dpr.MissingCoursesError as mce:
+    print("Student ID %s not found in courses file %s." % (ID, coursesfile))
+    print("Skipping this student.")
+    continue
+
+  degree = create_degree(student.degreecode, student.speccode)
+  degree.check(courses)
+  status = degree.complete
+
+  pr = dpr.ProgressReport(student, courses, degree)
+  MATHgpa = pr.degree_GPA
+
+  MATHcrs = len([cc for cc in courses if cc.dept =='MATH' and dpr.GPAlookup[cc.grade] > 2.0])
+  MATHadv = len([cc for cc in courses if cc.dept =='MATH' and int(cc.number) > 4000 and dpr.GPAlookup[cc.grade] > 2.0])
+
+  slist.append([ID, lname, fname, email, status, SMUgpa, MATHgpa, MATHadv])
+  print("%8s: %16s, %16s (%24s) %s, %5.3f %5.3f %4d %4d" % (ID, lname, fname, email, status, SMUgpa, MATHgpa, MATHcrs, MATHadv))
+
+
+
+
+
+
+
+
+
+
+
