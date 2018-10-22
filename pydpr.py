@@ -170,10 +170,10 @@ def load_student_from_query(queryfile, studentID):
   s.lname = row[2].value
   s.fname = row[3].value
   s.email = row[4].value
-  s.degree = row[22].value
+  s.degree = row[24].value
   s.degreecode = s.degree.split('-')[1]
 
-  s.speccode = row[24].value
+  s.speccode = row[26].value
   if s.speccode != None:
     s.speccode = s.speccode.split('-')[1]
 
@@ -183,7 +183,7 @@ def load_student_from_query(queryfile, studentID):
 
   s.gyear  = 2000+int(s.gterm[1:3])
   s.gsess  = int(s.gterm[3])
-  #s.gstatus = row[7].value
+  s.gstatus = row[18].value
 
   return s
 
@@ -236,48 +236,24 @@ def load_courses_from_query(queryfile, studentID):
 
 
 
-# this function reads a course history from a single text file, 
-# which must be the result of copying the my.SMU course history 
-# table, for a specific student, and pasting it into a text file.
-
-def load_courses_from_webtext(courselistfile):
-
-  if not os.path.isfile(courselistfile):
-    print("Manual file %s not found.  Exiting." % (courselistfile))
-    raise MissingFileError(courselistfile)
-
-  f = open(courselistfile, 'r')
-
-  endc = -1
-  courselist = []
-  lookahead = f.readline()
-  while lookahead != '':
-
-    course = Course()
-    course.code    = lookahead[:endc]
-    course.name    = f.readline()[:endc]
-    course.term    = f.readline()[:endc]
-    course.grade   = f.readline()[:endc]
-    course.credits = f.readline()[:endc]
-    course.status  = f.readline()[:endc]
-    lookahead      = f.readline()
-
-    words = course.code.split(' ')
-    course.dept = words[0]
-    course.number = words[1]
-    course.termsort = convert_term_name(course.term)
-
-    courselist.append(course)
-
-  f.close()
-  return courselist
-
-
-
 
 # =====================================
 #     Utilities
 # =====================================
+
+
+def current_term():
+
+  date = time.localtime()
+  year = date.tm_year
+  month = date.tm_mon
+
+  term = 1000 + (year - 2000)*10
+  if month <= 6:  term += 2
+  if month > 6:  term += 7
+  return term
+
+
 
 
 def termcode_to_text(termcode):
@@ -310,18 +286,6 @@ def convert_term_name(termname):
   else:
     newname = "%2d%2d-spring" % (syear-1, syear)
   return newname
-
-
-def current_term():
-
-  date = time.localtime()
-  year = date.tm_year
-  month = date.tm_mon
-
-  term = 1000 + (year - 2000)*10
-  if month <= 6:  term += 2
-  if month > 6:  term += 7
-  return term
 
 
 
@@ -406,22 +370,29 @@ The most basic building block for describing degrees, a Requirement is simply a 
 
 class Requirement(object):
 
-  def __init__(self, name, courselist, mincourses=0, minhours=0):
+  def __init__(self, name, courselist, mincourses=0, minhours=0, greedy=False):
 
     self.name       = name
     self.courselist = set(courselist)
 
     self.minhours   = minhours
     self.mincourses = mincourses
+    self.greedy     = greedy
 
     self.satcourses = []
     self.satisfied  = False
+
+    if mincourses > 0:
+      self.hours_rem = 3*mincourses
+    if minhours > 0:
+      self.hours_rem = minhours
+    
     return 
 
 
   def check(self, coursehistory, verlist=None):
 
-    # identify courses also satisfying verifications
+    # identify satisfying courses that also satisfy verifications
     vercourses = set()
     if verlist != None:
       for ver in verlist:
@@ -429,14 +400,12 @@ class Requirement(object):
           if course in self.courselist:
             vercourses.add(course)
 
-
     # first find satisfying courses that are *also* in the verification lists
     templist = []
     for course in vercourses:
       satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and GPAlookup[cc.grade] > 1.5)]
       if satisfying_course != []:
         templist.append(satisfying_course[0])
-    templist.sort(key=lambda course: course.term)
     self.satcourses.extend(templist)
 
     # now find satisfying courses that are *not* in the verification list
@@ -445,24 +414,38 @@ class Requirement(object):
       satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and GPAlookup[cc.grade] > 1.5)]
       if satisfying_course != []:
         templist.append(satisfying_course[0])
-    templist.sort(key=lambda course: course.term)
     self.satcourses.extend(templist)
 
-    # truncate the list to the size of the requirement
+    # check satisfaction and obtain remaining hours
     if self.mincourses > 0:
-      if len(self.satcourses) > self.mincourses:
-        self.satcourses = self.satcourses[:self.mincourses]
       self.satisfied = (len(self.satcourses) >= self.mincourses)
+      self.hours_rem = 0 if self.satisfied else 3*(self.mincourses - len(self.satcourses))
+
     if self.minhours > 0:
-      templist = []
       cumhours = 0
       for course in self.satcourses:
-        templist.append(course)
         cumhours += course.credits
-        if cumhours > self.minhours:
-          break
-      self.satcourses = templist
       self.satisfied = (cumhours >= self.minhours)
+      self.hours_rem  = 0 if self.satisfied else (self.minhours - cumhours)
+
+
+    # truncate unless greedy == True
+    if self.greedy == False:
+      if self.mincourses > 0:
+        self.satcourses = self.satcourses[:self.mincourses]
+      if self.minhours > 0:
+        templist = []
+        cumhours = 0
+        for course in self.satcourses:
+          templist.append(course)
+          cumhours += course.credits
+          if cumhours > self.minhours:
+            break
+        self.satcourses = templist
+
+
+    # re-sort the used courses by term
+    self.satcourses.sort(key=lambda course: course.term)
 
     return 
 
@@ -487,13 +470,15 @@ class Group(object):
     self.name       = name
     self.reqlist    = [] if reqlist == None else reqlist
     self.verlist    = [] if verlist == None else verlist
+
     self.satisfied  = False
     self.satcourses = []
+    self.hours_rem = None
     return 
 
 
-  def add_requirement(self, name, courselist, mincourses=0, minhours=0):
-    req = Requirement(name, courselist, mincourses, minhours)
+  def add_requirement(self, name, courselist, mincourses=0, minhours=0, greedy=False):
+    req = Requirement(name, courselist, mincourses, minhours, greedy)
     self.reqlist.append(req)
     return
 
@@ -516,9 +501,13 @@ class Group(object):
       #for course in ver.satcourses:        # Here is where a verifcation is 
       #  self.satcourses.append(course)     # different than a requirement
 
-    reqs_satisfied = (False not in [req.satisfied for req in self.reqlist])
-    vers_satisfied = (False not in [ver.satisfied for ver in self.verlist])
-    self.satisfied = (reqs_satisfied and vers_satisfied)
+    reqs_satlist = [req.satisfied for req in self.reqlist]
+    vers_satlist = [ver.satisfied for ver in self.verlist]
+    print(reqs_satlist)
+    print(vers_satlist)
+    self.satisfied = (False not in reqs_satlist and False not in vers_satlist)
+    self.hours_rem = 0 if self.satisfied else sum([req.hours_rem for req in self.reqlist])
+    print([req.hours_rem for req in self.reqlist])
     return
 
 
@@ -534,6 +523,7 @@ class Degree:
     self.grplist = [] if grplist == None else grplist
     self.complete = False
     self.required_credits = 0
+    self.hours_rem = None
 
     # optional opportunity to customize degree checking and warning reporting
     self.pre_check_routines = []
@@ -556,8 +546,19 @@ class Degree:
       grp.check(courses)
       for rr in grp.satcourses:
         courses = [cc for cc in courses if cc.code != rr.code]  # removes already-used courses
-    self.complete = (False not in [grp.satisfied for grp in self.grplist])
+    grp_satlist = [grp.satisfied for grp in self.grplist]
+    print(grp_satlist)
+    self.complete = (False not in grp_satlist)
+    print(self.complete)
+    if self.complete:
+      self.hours_rem = 0
+      print('degree complete')
+    else:
+      self.hours_rem = sum([grp.hours_rem for grp in self.grplist])
+      print('degree incomplete')
+      print([grp.hours_rem for grp in self.grplist])
 
+    print(self.hours_rem)
     ## run any red-flag checks
     #for rfr in self.red_flag_checks:
     #  rfr(self, coursehistory)
@@ -658,7 +659,7 @@ class ProgressReport:
   
     # assess remaining credits and semesters
     self.degree_rem_semesters = (int(student.gterm) - current_term())*2/10
-    self.degree_rem_credits = degree.required_credits - sum([ cc.credits for cc in degcourses ])
+    self.degree_rem_credits = degree.hours_rem
     if self.degree_rem_semesters < 1: 
       self.degree_credits_per_semester = np.inf if self.degree_rem_credits > 0 else 0
     else:
@@ -673,6 +674,22 @@ class ProgressReport:
 # ================================================
 #     reporting and visualization
 # ================================================
+
+
+
+
+
+
+def terminal_courselist(student, courselist, degree):
+
+  sortedcourses = copy.deepcopy(courselist)
+  sortedcourses.sort(key=lambda course: "%s-%s" % (course.dept, course.code))
+  for cc in sortedcourses:
+    if cc.credits == 0: 
+      continue
+    print("{0:4} {1:4} --> {2:16} --> {3:4} {4:4}".format(cc.dept, cc.number, termcode_to_text(cc.term), cc.credits, cc.grade))
+  print('\n')
+
 
 
 
@@ -693,7 +710,7 @@ def terminal_report(student, courselist, degree):
     credits_per_sem = pr.degree_credits_per_semester
     credit_rating = ""
     if   credits_per_sem == 0.0:  credit_rating = Fore.CYAN    + 'COMPLETE!!'  + Style.RESET_ALL
-    elif credits_per_sem <= 3.0:  credit_rating = Fore.GREEN   + 'excellent!'  + Style.RESET_ALL
+    elif credits_per_sem <= 3.0:  credit_rating = Fore.GREEN   + 'good.'       + Style.RESET_ALL
     elif credits_per_sem <= 4.5:  credit_rating = Fore.YELLOW  + 'acceptable.' + Style.RESET_ALL
     elif credits_per_sem <= 6.0:  credit_rating = Fore.YELLOW  + 'caution ...' + Style.RESET_ALL
     elif credits_per_sem <= 7.5:  credit_rating = Fore.RED     + 'concern!'    + Style.RESET_ALL
@@ -725,21 +742,23 @@ def terminal_report(student, courselist, degree):
         nullcourse.term = '(none)'
         nullcourse.code = '(none)'
         nullcourse.grade = '-'
+        counter = 0
 
         if (req.minhours > 0):
           sathours = sum([cc.credits for cc in req.satcourses])
           remhours = max(0, req.minhours - sathours)
           for kk,cc in enumerate(req.satcourses):
-            counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk)
+            counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk+1)
             report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
           blanklns = int(np.ceil(remhours / 3.0))
-          cc = nullcourse if len(req.satcourses) < kk else req.satcourses[kk-1]
+          cc = nullcourse
           for kk in range(blanklns):
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+
         if (req.mincourses > 0):
-          for kk in range(1,req.mincourses+1):
-            counter = '' if req.mincourses == 1 else ' '+str(kk)
-            cc = nullcourse if len(req.satcourses) < kk else req.satcourses[kk-1]
+          for kk in range(req.mincourses):
+            counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
+            cc = nullcourse if len(req.satcourses) <= kk else req.satcourses[kk]
             report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
       # now loop through verifications
@@ -779,7 +798,7 @@ def pdf_report(student, courselist, degree, pdfname):
     credits_per_sem = pr.degree_credits_per_semester
     credit_rating = ""
     if   credits_per_sem == 0.0:  credit_rating = 'COMPLETE!!'
-    elif credits_per_sem <= 3.0:  credit_rating = 'excellent!'
+    elif credits_per_sem <= 3.0:  credit_rating = 'good.'
     elif credits_per_sem <= 4.5:  credit_rating = 'acceptable.'
     elif credits_per_sem <= 6.0:  credit_rating = 'caution ...'
     elif credits_per_sem <= 7.5:  credit_rating = 'concern!'
@@ -818,7 +837,7 @@ def pdf_report(student, courselist, degree, pdfname):
           sathours = sum([cc.credits for cc in req.satcourses])
           remhours = max(0, req.minhours - sathours)
           for kk,cc in enumerate(req.satcourses):
-            counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk)
+            counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk+1)
             report += '\n'
             report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
           blanklns = int(np.ceil(remhours / 3.0))
@@ -828,9 +847,9 @@ def pdf_report(student, courselist, degree, pdfname):
             report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, nc.code, termcode_to_text(nc.term), nc.grade) + '\n'
 
         if (req.mincourses > 0):
-          for kk in range(1,req.mincourses+1):
-            counter = '' if req.mincourses == 1 else ' '+str(kk)
-            cc = nullcourse if len(req.satcourses) < kk else req.satcourses[kk-1]
+          for kk in range(req.mincourses):
+            counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
+            cc = nullcourse if len(req.satcourses) <= kk else req.satcourses[kk]
             report += '\n'
             report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 

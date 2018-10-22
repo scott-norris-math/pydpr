@@ -23,41 +23,42 @@ check()
 
 '''
 
-
-
-
-
-
 import sys
 import pydpr.pydpr as dpr
 
 
 spectext = dict({'PM':'Pure', 'ANU':'Applied/Numerical', 'CSE':'Computer Science', 'OR':'Operations Research', 'ENG-EE':'Elec. Eng.', 'ENG-ME':'Mech. Eng.', '':'NONE DECLARED!!!'})
 
-CSE    = set( ['CSE 1341', 'CSE 1342', 'CEE 3310'] )
-STAT   = set( ['STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370'] )
-PHYS   = set( ['PHYS 1403', 'PHYS 1404', 'PHYS 1301', 'PHYS 1303', 'PHYS 1304'] )
-CHEM   = set( ['CHEM 1303', 'CHEM 1304'] )
-BIOL   = set( ['BIOL 1401', 'BIOL 1402', 'BIOL 1301', 'BIOL 1302'] )
-GEOL   = set( ['GEOL 1301', 'GEOL 1305', 'GEOL 1307', 'GEOL 1313', 'GEOL 1315', 'GEOL 3340'] ) 
-SCI    = PHYS|CHEM|BIOL|GEOL
+CAL1 = set( ['MATH 1337', 'MATH 1309'] )
+CAL2 = set( ['MATH 1338', 'MATH 1340'] )
+CORE = set( ['MATH 3302', 'MATH 2339', 'MATH 3304', 'MATH 3353', 'MATH 3313', 'MATH 2343'] )
 
-CAL1   = set( ['MATH 1337', 'MATH 1309'] )
-CAL2   = set( ['MATH 1338', 'MATH 1340'] )
-
-CORE   = set( ['MATH 3302', 'MATH 3304', 'MATH 3313', 'MATH 2339', 'MATH 2343', 'MATH 3353'] )
-MID    = set( ['MATH 3308', 'MATH 3311', 'MATH 3315', 'MATH 3334', 'MATH 3337'] )
-
-PURE   = set( ['MATH 4338', 'MATH 4351', 'MATH 4355', 'MATH 4381', 'MATH 5331', 'MATH 5353'])
-APPL   = set( ['MATH 4337', 'MATH 4325', 'MATH 4335', 'MATH 5334', 'MATH 6324'] )
-COMP   = set( ['MATH 4370', 'MATH 5315', 'MATH 5316', 'CSE 7365'] )
-GRAD   = set( ['MATH 6315', 'MATH 6316', 'MATH 6324', 'MATH 6350', 'MATH 6333'] )
-ADV    = PURE|APPL|COMP|GRAD
-
+IPRF = set( ['MATH 3308', 'MATH 3311'] )
 ISCP = set( ['MATH 3315', 'CSE 3365', 'MATH 3316'] )
-PM  = set( ['MATH 3308', 'MATH 3311', 'MATH 3337', 'MATH 4338', 'MATH 4351', 'MATH 4355', 'MATH 4381', 'MATH 5331', 'MATH 5353'])
-ANU = set( ['EMIS 3360', 'MATH 3334', 'MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4335', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 5353'])
 
+PURE = set( ['MATH 3337', 'MATH 4338', 'MATH 4351', 'MATH 4355', 'MATH 4381', 'MATH 5331', 'MATH 5353', 'MATH 6337'])
+APPL = set( ['MATH 3334', 'MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4335', 'MATH 5331', 'MATH 5334', 'MATH 5353', 'MATH 6324'])
+COMP = set( ['MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 6315', 'MATH 6316', 'CSE 7365'])
+ADV  = PURE|APPL|COMP
+APNU = APPL|COMP
+
+
+CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CEE 3310'] )
+STAT = set( ['STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
+
+PHYS = set( ['PHYS 1303', 'PHYS 1304', 'PHYS 1105', 'PHYS 1106', 'PHYS 1403', 'PHYS 1404',] )
+CHEM = set( ['CHEM 1303', 'CHEM 1304', 'CHEM 1113', 'CHEM 1114'] )
+BIOL = set( ['BIOL 1301', 'BIOL 1302', 'BIOL 1101', 'BIOL 1102', 'BIOL 1401', 'BIOL 1402'] )
+GEOL = set( ['GEOL 1301', 'GEOL 1305', 'GEOL 1307', 'GEOL 1313', 'GEOL 1315', 'GEOL 3340'] ) 
+SCI  = PHYS|CHEM|BIOL|GEOL
+
+ENG1 = set(['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'])
+
+MEG2 = set(['ME 4322', 'ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'])
+EEG2 = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 3322', 'EE 3330', 'EE 3372'])
+CEG2 = set(['ME 4322', 'ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'CEE 7361', 'CEE 7364', 'ME 4322', 'ME 5322', 'ME 7322'])
+ORG2 = set(['EMIS 3360', 'EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
+CSG2 = set()
 
 
 
@@ -84,8 +85,8 @@ def create_degree(degcode, speccode):
 
 
   # Fundamentals for major
-  fund = dpr.Group("Fundamentals")
-  fund.add_requirement("Calculus I",     ['MATH 1337', 'MATH 1309'], minhours=3)
+  fund = dpr.Group("Math Foundation")
+  fund.add_requirement("Calculus I",     ['MATH 1337', 'MATH 1309'], 1)
   fund.add_requirement("Calculus II",    ['MATH 1338', 'MATH 1340'], 1)
   fund.add_requirement("Calculus III",   ['MATH 3302', 'MATH 2339'], 1)
   fund.add_requirement("Linear Algebra", ['MATH 3304', 'MATH 3353'], 1)
@@ -94,8 +95,8 @@ def create_degree(degcode, speccode):
 
   # Supplemental Courses
   supp = dpr.Group("Supplemental Courses")
-  supp.add_requirement("Intro. Statistics", STAT, 1)
-  supp.add_requirement("Intro. Programming", CSE, 1)
+  supp.add_requirement("Sci/Eng Statistics", STAT, 1, greedy=True)
+  supp.add_requirement("Intro. Programming", CSE, minhours=3, greedy=True)
 
   if degcode == 'BA':
     degree.name = 'B.A. Mathematics:  Spec. %s ' % ('UNKNOWN -- SEE ME ASAP.' if (speccode == None or speccode == 'UNS' or speccode == 'ENG') else speccode)
@@ -104,56 +105,50 @@ def create_degree(degcode, speccode):
   if degcode == 'BS':
     degree.name = 'B.S. Mathematics:  Spec. %s ' % ('UNKNOWN -- SEE ME ASAP.' if (speccode == None or speccode == 'UNS' or speccode == 'ENG') else speccode)
     degree.required_credits = 42
-    supp.add_requirement("Science", SCI, 2) 
+    supp.add_requirement("Science", SCI, minhours=6, greedy=True) 
 
   degree.add_group(supp)
 
 
 
 
-  spec = dpr.Group("Advanced Electives")
+  spec = dpr.Group("Specialization Electives")
   ENG4P = set([])
 
   if speccode == 'PM':
-    spec.add_requirement("Pure Math", PM, 4)
+    spec.add_requirement("Intro. Proof", IPRF, 1)
+    spec.add_requirement("Pure Math", PURE, minhours=9)
 
   if speccode == 'ANU' or speccode == None or speccode == 'UNS':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("App/Num. Math", ANU, 3)
-
-  if speccode == 'CSE':
-    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("CSE 4381", ['CSE 4381'], 1)
-    spec.add_requirement("Math", ['MATH 4370', 'MATH 4315', 'MATH 5315', 'MATH 5316', 'MATH 6315', 'MATH 6316'], 2) 
-
-  if speccode == 'OR':
-    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Extra Math", ['MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5353', 'MATH 6315', 'MATH 6316', 'CSE 7365'], 1 )
-    spec.add_requirement("EMIS 3360", ['EMIS 3360'], 1)
-    spec.add_requirement("Extra EMIS", ['EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'], 1)
-    ENG4P = set(['EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
-
-  if speccode == 'ENG-EE':
-    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'], 2)
-    spec.add_requirement("Two EE", ['EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 3322', 'EE 3330', 'EE 3372'], 2 )
-    ENG4P = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360'])
+    spec.add_requirement("App/Num. Math", APNU, 3)
 
   if speccode == 'ENG-ME':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'], 2)
-    spec.add_requirement("Two ME", ['ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 7322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'], 2 )
-    ENG4P = set(['ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'])
-
+    spec.add_requirement("Two Math 4000+", ENG1, 2)
+    spec.add_requirement("Two ME", MEG2, 2, greedy=True)
+    
   if speccode == 'ENG-CEE':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'], 2)
+    spec.add_requirement("Two Math 4000+", ENG1, 2)
+    spec.add_requirement("Two CEE", CEG2, 2, greedy=True)
 
-    ENG4P = set(['ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'ME 5322', 'ME 7322', 'CEE 7361', 'CEE 7364'])
-    spec.add_requirement("Two CEE", list(ENG4P), 2)
+  if speccode == 'ENG-EE':
+    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
+    spec.add_requirement("Two Math 4000+", ENG1, 2)
+    spec.add_requirement("Two EE", EEG2, 2, greedy=True)
+
+  if speccode == 'CSE':
+    spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
+    spec.add_requirement("Two Math 4000+",  APNU, 2) 
+    spec.add_requirement("CSE 4381", ['CSE 4381'], 1)
+
+  if speccode == 'OR':
+    spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
+    spec.add_requirement("Adv. Sci. Comp.", COMP, 1 )
+    spec.add_requirement("Two EMIS", ORG2, 2, greedy=True)
 
 
-  #adv.add_subreq( dpr.Requirement("Four from MATH", MATH3|MATH4P, 4))
   spec.add_verification( "ver: Two 4000+ (any)", ADV|ENG4P, 2)
   spec.add_verification( "ver: One 4000+ (MATH)", ADV, 1)
   degree.add_group(spec)
@@ -161,8 +156,8 @@ def create_degree(degcode, speccode):
 
   # one advanced elective
   if speccode in set(['PM', 'ANU', 'CSE', 'OR']):
-    elec = dpr.Group("One 3000+ elective")
-    elec.add_requirement("Elective", MID|ADV|GRAD, 1)
+    elec = dpr.Group("Additional Elective(s)")
+    elec.add_requirement("Extra Math 3000+", IPRF|ISCP|ADV, mincourses=1, greedy=True)
     degree.add_group(elec)
 
   #return
