@@ -64,7 +64,19 @@ CSG2 = set()
 
 def create_degree(degcode, speccode):
 
+
+  # create a generic degree instance
   degree = dpr.Degree()
+
+
+  # add major-specific warnings
+  degree.add_major_warning_check(incomplete_foundation)
+  if speccode == 'PM':
+    degree.add_major_warning_check(pure_missing_3311)
+  if speccode in ['CSE', 'OR']:
+    degree.add_major_warning_check(comp_missing_3315)
+
+
 
   # If it is a minor, adjust and return
   if (0):
@@ -98,13 +110,18 @@ def create_degree(degcode, speccode):
   supp.add_requirement("Sci/Eng Statistics", STAT, 1, greedy=True)
   supp.add_requirement("Intro. Programming", CSE, minhours=3, greedy=True)
 
+
+  # check for BA/BS and specialization
+  specstring = speccode
+  if speccode in [None, 'UNS', 'ENG']:
+    specstring = 'UNKNOWN -- SEE ME ASAP.'
+    speccode = 'ANU'
+
   if degcode == 'BA':
-    degree.name = 'B.A. Mathematics:  Spec. %s ' % ('UNKNOWN -- SEE ME ASAP.' if (speccode == None or speccode == 'UNS' or speccode == 'ENG') else speccode)
-    degree.required_credits = 36
+    degree.name = 'B.A. Mathematics:  Spec. %s ' % (specstring)
 
   if degcode == 'BS':
-    degree.name = 'B.S. Mathematics:  Spec. %s ' % ('UNKNOWN -- SEE ME ASAP.' if (speccode == None or speccode == 'UNS' or speccode == 'ENG') else speccode)
-    degree.required_credits = 42
+    degree.name = 'B.S. Mathematics:  Spec. %s ' % (specstring)
     supp.add_requirement("Science", SCI, minhours=6, greedy=True) 
 
   degree.add_group(supp)
@@ -168,7 +185,12 @@ def create_degree(degcode, speccode):
 
 
 
-def autodetect_eng_specialization(student, courselist):
+# ---------------------------------------------------------
+#    Degree-specific pre- and post-check routines
+# ---------------------------------------------------------
+
+
+def detect_eng_specialization(student, courselist):
 
   if student.speccode == 'ENG':
     depts = [a.dept for a in courselist if a.dept in ['ME', 'EE', 'CEE']]
@@ -181,8 +203,48 @@ def autodetect_eng_specialization(student, courselist):
 
 
 
+def incomplete_foundation(student, coursehistory, degree):
+
+  now = dpr.current_term()
+  grad = int(student.gterm)
+  termsleft = (grad-now)/5
+  fcomp = degree.grplist[0].satisfied
+
+  # return appropriate warning
+  warning = None
+  if termsleft <= 4 and not fcomp:
+    warning = "Math foundation incomplete by junior year"
+  return warning
 
 
+
+def pure_missing_3311(student, coursehistory, degree):
+
+  now = dpr.current_term()
+  grad = int(student.gterm)
+  termsleft = (grad-now)/5
+  ccodes = [c.code for c in coursehistory]
+
+  # return appropriate warning
+  warning = None
+  if termsleft <= 4 and 'MATH 3311' not in ccodes and 'MATH 3308' not in ccodes:
+    warning = "Math pure spec. not enrolled in MATH 3308/3311"
+  return warning
+  
+
+
+def comp_missing_3315(student, coursehistory, degree):
+
+  now = dpr.current_term()
+  grad = int(student.gterm)
+  termsleft = (grad-now)/5
+  ccodes = [c.code for c in coursehistory]
+
+  # return appropriate warning
+  warning = None
+  if termsleft <= 3 and 'MATH 3315' not in ccodes:
+    warning = "Math comp. spec. not enrolled in MATH 3315"
+  return warning
 
 
 

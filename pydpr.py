@@ -503,11 +503,8 @@ class Group(object):
 
     reqs_satlist = [req.satisfied for req in self.reqlist]
     vers_satlist = [ver.satisfied for ver in self.verlist]
-    print(reqs_satlist)
-    print(vers_satlist)
     self.satisfied = (False not in reqs_satlist and False not in vers_satlist)
     self.hours_rem = 0 if self.satisfied else sum([req.hours_rem for req in self.reqlist])
-    print([req.hours_rem for req in self.reqlist])
     return
 
 
@@ -527,18 +524,36 @@ class Degree:
 
     # optional opportunity to customize degree checking and warning reporting
     self.pre_check_routines = []
-    self.dept_warning_checks = []
+    self.warning_checks_general = []
+    self.warning_checks_major = []
+    self.warnings_general = []
+    self.warnings_major = []
+
+    # add standard checks
+    self.warning_checks_general.append(check_dropfails_lastyear)
+    self.warning_checks_general.append(check_GPA_lastsemester)
+    self.warning_checks_general.append(check_GPA_decrease)
+    self.warning_checks_general.append(check_degree_GPA)
+    self.warning_checks_general.append(check_credits_per_semester)
 
 
   def add_group(self, group):
     self.grplist.append(group)
     return
 
-  def check(self, coursehistory):
+  def add_major_precheck(self, callback):
+    self.pre_check_routines.append(callback)
+
+  def add_major_warning_check(self, callback):
+    self.warning_checks_major.append(callback)
+
+
+  def check(self, student, coursehistory):
 
     # run any pre-check routines
     for pcr in self.pre_check_routines:
-      pcr(self, coursehistory)
+      pcr(student, coursehistory, self)
+
 
     # make a copy of the courselist and analyze it
     courses = copy.deepcopy(coursehistory)
@@ -547,21 +562,23 @@ class Degree:
       for rr in grp.satcourses:
         courses = [cc for cc in courses if cc.code != rr.code]  # removes already-used courses
     grp_satlist = [grp.satisfied for grp in self.grplist]
-    print(grp_satlist)
     self.complete = (False not in grp_satlist)
-    print(self.complete)
     if self.complete:
       self.hours_rem = 0
-      print('degree complete')
     else:
       self.hours_rem = sum([grp.hours_rem for grp in self.grplist])
-      print('degree incomplete')
-      print([grp.hours_rem for grp in self.grplist])
 
-    print(self.hours_rem)
+
     ## run any red-flag checks
-    #for rfr in self.red_flag_checks:
-    #  rfr(self, coursehistory)
+    for wc in self.warning_checks_general:
+      warning = wc(student, coursehistory, self)
+      if warning != None:
+        self.warnings_general.append(warning)
+
+    for wc in self.warning_checks_major:
+      warning = wc(student, coursehistory, self)
+      if warning != None:
+        self.warnings_major.append(warning)
 
     return
 
@@ -569,7 +586,7 @@ class Degree:
 
 
 # -------------------------------
-#    TODO:  DPR Warning
+#    DPR Warnings
 # -------------------------------
 
 '''
@@ -590,7 +607,6 @@ class DPRWarning():
     What if checker() simply returns the warning string?
     '''
 
-
   def check(self, student, coursehistory, degree):
     pass
 
@@ -601,6 +617,114 @@ class DPRWarning():
       warnstring = "Warning:  "
     warnstring +=  string.Template(self.template).substitute(self.lookup)
     return warnstring
+
+
+
+def check_dropfails_lastyear(student, coursehistory, degree, threshhold=2.0):
+
+    this_term = int(current_term())
+    last_term = this_term - 5
+    last_year = this_term - 10
+
+    # count dropped or failed courses last semester
+    dropfailset = set(['W', 'F', 'D-', 'D', 'D+'])
+    dropfails = len([cc for cc in coursehistory if int(cc.term) >= last_year and cc.grade in dropfailset])
+
+    # return the appropriate response
+    warning = None
+    if dropfails > threshhold:
+      warning = "several drops/fails last year (%d)" % (dropfails)
+    return warning
+
+
+
+
+def check_GPA_lastsemester(student, coursehistory, degree, threshhold=2.0):
+
+    this_term = int(current_term())
+
+    # get last semester's courses
+    last_term = this_term - 5
+    courses_ls = [cc for cc in coursehistory if int(cc.term) == last_term and cc.grade in GPAgrades]
+
+    # calculate last semester's GPA
+    gpoints = np.array([GPAlookup[cc.grade] for cc in courses_ls]) 
+    credits = np.array([cc.credits for cc in courses_ls])
+    last_GPA = np.dot(gpoints, credits) / sum(credits)
+
+    # return the appropriate response
+    warning = None
+    if last_GPA < threshhold:
+      warning = "low GPA last semester (%2.2f)" % (last_GPA)
+    return warning
+
+
+
+
+def check_GPA_decrease(student, coursehistory, degree, threshhold=2.0):
+
+    this_term = int(current_term())
+
+    # get last semester's GPA
+    last_term1 = this_term - 5
+    courses_l1 = [cc for cc in coursehistory if int(cc.term) == last_term1 and cc.grade in GPAgrades]
+    gpoints1 = np.array([GPAlookup[cc.grade] for cc in courses_l1]) 
+    credits1 = np.array([cc.credits for cc in courses_l1])
+    last_GPA1 = np.dot(gpoints1, credits1) / sum(credits1)
+
+    # get two semester's past GPA
+    last_term2 = this_term - 10
+    courses_l2 = [cc for cc in coursehistory if int(cc.term) == last_term2 and cc.grade in GPAgrades]
+    gpoints2 = np.array([GPAlookup[cc.grade] for cc in courses_l2]) 
+    credits2 = np.array([cc.credits for cc in courses_l2])
+    last_GPA2 = np.dot(gpoints2, credits2) / sum(credits2)
+
+    # return the appropriate response
+    warning = None
+    if last_GPA2 - last_GPA1 > 0.5 and last_GPA1 < 2.5:
+      warning = "significant GPA decline (%2.2f --> %2.2f)" % (last_GPA2, last_GPA1)
+    return warning
+
+
+
+def check_degree_GPA(student, coursehistory, degree, threshhold=2.0):
+
+    # get all degree courses
+    degcourses = []
+    for grp in degree.grplist:
+      for cc in grp.satcourses:
+        degcourses.append(cc)
+
+    # calculate degree GPA
+    degcourseset = set([cc.code for cc in degcourses])
+    alldegcourses = [cc for cc in coursehistory if cc.code in degcourseset and cc.grade in GPAgrades]
+    gpoints = np.array([GPAlookup[cc.grade] for cc in alldegcourses]) 
+    credits = np.array([cc.credits for cc in alldegcourses])
+    degree_GPA = np.dot(gpoints, credits) / sum(credits)
+  
+    # return the appropriate response
+    warning = None
+    if degree_GPA < threshhold:
+      warning = "low degree GPA (%2.2f)" % (degree_GPA)
+    return warning
+
+
+
+def check_credits_per_semester(student, coursehistory, degree, threshhold=6.0):
+
+    # assess remaining credits and semesters
+    rem_semesters = (int(student.gterm) - current_term())*2/10
+    rem_credits = degree.hours_rem
+    if rem_semesters < 1: 
+      credits_per_semester = np.inf if self.degree_rem_credits > 0 else 0
+    else:
+      credits_per_semester = float(rem_credits) / float(rem_semesters)
+
+    # return the appropriate response
+    warning = None
+    if credits_per_semester > threshhold:
+      warning = "need %d credits over %d semesters" % (rem_credits, rem_semesters)
+    return warning
 
 
 
@@ -665,8 +789,6 @@ class ProgressReport:
     else:
       self.degree_credits_per_semester = float(self.degree_rem_credits) / float(self.degree_rem_semesters)
 
-
-    # here add a set of progress report
 
 
 
@@ -765,20 +887,25 @@ def terminal_report(student, courselist, degree):
       for ver in grp.verlist:
         reqstatus = Fore.GREEN+'satisfied'+Style.RESET_ALL if ver.satisfied else Fore.RED+'not satisfied'+Style.RESET_ALL
         report += '{0:24}: {1}'.format(ver.name, reqstatus) + '\n'
-      report += '\n'
+      report += '\n\n'
 
-    # Warnings
-    if pr.last_credits < 12:
-      report += Fore.RED+"Warning:"+Style.RESET_ALL+" last sem. credits = %d \n" % (pr.last_credits)
-    if pr.last_GPA < 2.5:
-      report += Fore.RED+"Warning:"+Style.RESET_ALL+" last semester GPA = %2.2f \n" % (pr.last_GPA)
-    if pr.last_year_fails > 0:
-      report += Fore.RED+"Warning:"+Style.RESET_ALL+" fails in last year = %d \n" % (pr.last_year_fails)
-    if pr.degree_GPA < 2.5:
-      report += Fore.RED+"Warning:"+Style.RESET_ALL+" cumulative degree GPA = %2.2f \n" % (pr.degree_GPA)
-    if pr.degree_credits_per_semester > 6:
-      report += Fore.RED+"Warning:"+Style.RESET_ALL+" needed degree credits / semester = %2.2f \n" % (pr.degree_credits_per_semester)
 
+    # General Warnings
+    if len(degree.warnings_general) > 0:
+      #report += 'General Warnings\n'
+      #report += '--------------------\n'
+      for warning in degree.warnings_general:
+        report += Fore.RED+"Warning:"+Style.RESET_ALL+"  " + warning + '.\n'
+
+    # Degree-Specific Warnings
+    if len(degree.warnings_major) > 0:
+      #report += 'Degree Plan Warnings\n'
+      #report += '--------------------\n'
+      for warning in degree.warnings_major:
+        report += Fore.RED+"Warning:"+Style.RESET_ALL+"  " + warning + '.\n'
+
+
+    report += '\n\n'
     return report
 
 
@@ -859,17 +986,22 @@ def pdf_report(student, courselist, degree, pdfname):
         report += '{0:24} {1}'.format(ver.name, reqstatus) + '\n'
       report += '\n\n'
 
-    # Warnings
-    if pr.last_credits < 12:
-      report += "WARNING: last sem. credits = %d \n" % (pr.last_credits)
-    if pr.last_GPA < 2.5:
-      report += "WARNING: last semester GPA = %2.2f \n" % (pr.last_GPA)
-    if pr.last_year_fails > 0:
-      report += "WARNING: fails in last year = %d \n" % (pr.last_year_fails)
-    if pr.degree_GPA < 2.5:
-      report += "WARNING: cumulative degree GPA = %2.2f \n" % (pr.degree_GPA)
-    if pr.degree_credits_per_semester > 6:
-      report += "WARNING: needed degree credits / semester = %2.2f \n" % (pr.degree_credits_per_semester)
+    report += '\n'
+
+    # General Warnings
+    if len(degree.warnings_general) > 0:
+      #report += 'General Warnings\n'
+      #report += '--------------------\n'
+      for warning in degree.warnings_general:
+        report += "Warning:  " + warning + '.\n'
+
+    # Degree-Specific Warnings
+    if len(degree.warnings_major) > 0:
+      #report += 'Degree Plan Warnings\n'
+      #report += '--------------------\n'
+      for warning in degree.warnings_major:
+        report += "Warning:  " + warning + '.\n'
+
 
     # write to textfile
     sp = 'temp-report-%s' % (student.ID)
