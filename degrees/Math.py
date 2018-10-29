@@ -54,7 +54,7 @@ MEG2 = set(['ME 4322', 'ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'M
 EEG2 = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 3322', 'EE 3330', 'EE 3372'])
 CEG2 = set(['ME 4322', 'ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'CEE 7361', 'CEE 7364', 'ME 4322', 'ME 5322', 'ME 7322'])
 ORG2 = set(['EMIS 3360', 'EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
-CSG2 = set()
+CSG2 = set(['CSE 4381'])
 
 
 
@@ -144,30 +144,34 @@ def create_degree(degcode, speccode):
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+", ENG1, 2)
     spec.add_requirement("Two ME", MEG2, 2, greedy=True)
+    ENG4P = MEG2
     
   if speccode == 'ENG-CEE':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+", ENG1, 2)
     spec.add_requirement("Two CEE", CEG2, 2, greedy=True)
+    ENG4P = CEG2
 
   if speccode == 'ENG-EE':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+", ENG1, 2)
     spec.add_requirement("Two EE", EEG2, 2, greedy=True)
+    ENG4P = EEG2
 
   if speccode == 'CSE':
     spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+",  APNU, 2) 
-    spec.add_requirement("CSE 4381", ['CSE 4381'], 1)
+    spec.add_requirement("CSE 4381", CSG2, 1)
+    ENG4P = CSG2
 
   if speccode == 'OR':
     spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Adv. Sci. Comp.", COMP, 1 )
     spec.add_requirement("Two EMIS", ORG2, 2, greedy=True)
+    ENG4P = ORG2
 
-
-  spec.add_verification( "ver: Two 4000+ (any)", ADV|ENG4P, 2)
   spec.add_verification( "ver: One 4000+ (MATH)", ADV, 1)
+  spec.add_verification( "ver: Two 4000+ (any)", ADV|ENG4P, 2)
   degree.add_group(spec)
 
 
