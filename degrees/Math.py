@@ -1,12 +1,7 @@
 '''
 TODO:  
 
-Need specific departmental warnings in the following cases:
-
-Spring of Sophomore year (5 sem remaining), and not taking 3308.
 Fall of Junior year (4 sem remaining), and not taking CSE 1341.
-Spring of Junior year (3 sem remaining), and not taking 3337.
-Spring of Junior year (3 sem remaining), and not taking 3315.
 
 Eventually we want a global routine provided by pydpr, 
 that allows the user to select which degree we want to create.
@@ -24,6 +19,7 @@ check()
 '''
 
 import sys
+import numpy as np
 import pydpr.pydpr as dpr
 
 
@@ -70,11 +66,15 @@ def create_degree(degcode, speccode):
 
 
   # add major-specific warnings
+  degree.add_major_warning_check(credits_per_semester)
   degree.add_major_warning_check(incomplete_foundation)
   if speccode == 'PM':
     degree.add_major_warning_check(pure_missing_3311)
   if speccode in ['CSE', 'OR']:
+    degree.add_major_warning_check(comp_missing_1341)
     degree.add_major_warning_check(comp_missing_3315)
+  if speccode in ['ANU', 'ENG-ME', 'ENG-EE', 'ENG-CEE']:
+    degree.add_major_warning_check(anum_missing_1341)
 
 
 
@@ -205,46 +205,121 @@ def detect_eng_specialization(student, courselist):
 
 def incomplete_foundation(student, coursehistory, degree):
 
+  # get necessary information
   now = dpr.current_term()
   grad = int(student.gterm)
   termsleft = (grad-now)/5
   fcomp = degree.grplist[0].satisfied
 
   # return appropriate warning
-  warning = None
-  if termsleft <= 4 and not fcomp:
-    warning = "Math foundation incomplete by junior year"
-  return warning
+  if termsleft < 2 and not fcomp:
+    return dpr.DPRWarning(3, "Foundation incomplete with <= 2 semesters remaining.")
+  if termsleft < 4 and not fcomp:
+    return dpr.DPRWarning(2, "Foundation incomplete with <= 4 semesters remaining.")
+  if termsleft < 6 and not fcomp:
+    return dpr.DPRWarning(1, "Aim to complete foundation by the end of sophomore year.")
+  return None
 
 
 
 def pure_missing_3311(student, coursehistory, degree):
 
-  now = dpr.current_term()
-  grad = int(student.gterm)
-  termsleft = (grad-now)/5
+  # get necessary information
   ccodes = [c.code for c in coursehistory]
+  uterms = dpr.unplanned_terms(student, coursehistory)
+  unready = ('MATH 3311' not in ccodes and 'MATH 3308' not in ccodes)
 
   # return appropriate warning
-  warning = None
-  if termsleft <= 4 and 'MATH 3311' not in ccodes and 'MATH 3308' not in ccodes:
-    warning = "Math pure spec. not enrolled in MATH 3308/3311"
-  return warning
-  
+  if unready and uterms < 3:
+    return dpr.DPRWarning(3, "missing MATH 3311: Pure specializaion no longer possible.")
+  if unready and uterms < 4:
+    return dpr.DPRWarning(2, "you must change your schedule to be enrolled in MATH 3311.")
+  if unready and uterms < 5:
+    return dpr.DPRWarning(1, "make sure to take MATH 3311 as early as possible.")
+
+  return None
+
+
+def comp_missing_1341(student, coursehistory, degree):
+
+  # get necessary information
+  ccodes = [c.code for c in coursehistory]
+  uterms = dpr.unplanned_terms(student, coursehistory)
+  unready = ('CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP' not in ccodes)
+
+  # return appropriate warning
+  if unready and uterms < 3:
+    return dpr.DPRWarning(3, "missing CSE 1341: CSE/EMIS specializaion no longer possible.")
+  if unready and uterms < 4:
+    return dpr.DPRWarning(2, "you need to change your schedule to be enrolled in CSE 1341.")
+  if unready and uterms < 5:
+    return dpr.DPRWarning(1, "it is best to take CSE 1341 by the end of Sophomore year.")
+
+  return None
+
+
+
+def anum_missing_1341(student, coursehistory, degree):
+
+  # get necessary information
+  ccodes = [c.code for c in coursehistory]
+  uterms = dpr.unplanned_terms(student, coursehistory)
+  unready = ('CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP' not in ccodes)
+
+  # return appropriate warning
+  if unready and uterms < 2:
+    return dpr.DPRWarning(4, "missing CSE 1341: will not be able to graduate on time.")
+  if unready and uterms < 3:
+    return dpr.DPRWarning(3, "you won't graduate unless you add CSE 1341 to your schedule.")
+  if unready and uterms < 4:
+    return dpr.DPRWarning(2, "CSE 1341 not taken by the end of Junior year: inadvisable.")
+  if unready and uterms < 5:
+    return dpr.DPRWarning(1, "make sure to take CSE 1341 by the end of Junior year.")
+
+  return None
 
 
 def comp_missing_3315(student, coursehistory, degree):
 
-  now = dpr.current_term()
-  grad = int(student.gterm)
-  termsleft = (grad-now)/5
+  # get necessary information
   ccodes = [c.code for c in coursehistory]
+  uterms = dpr.unplanned_terms(student, coursehistory)
+  unready = ('MATH 3315' not in ccodes and 'MATH 3316' not in ccodes and 'CSE 3365' not in ccodes)
 
   # return appropriate warning
-  warning = None
-  if termsleft <= 3 and 'MATH 3315' not in ccodes:
-    warning = "Math comp. spec. not enrolled in MATH 3315"
-  return warning
+  if unready and uterms < 2:
+    return dpr.DPRWarning(3, "missing MATH 3315: CSE/EMIS specializaion no longer possible.")
+  if unready and uterms < 3:
+    return dpr.DPRWarning(2, "you need to change your schedule to be enrolled in MATH 3315.")
+  if unready and uterms < 4:
+    return dpr.DPRWarning(1, "make sure to take MATH 3315 by Junior year at the latest.")
 
+  return None
+
+
+
+
+def credits_per_semester(student, coursehistory, degree, threshhold=6.0):
+
+    # assess remaining credits and semesters
+    rem_semesters = (int(student.gterm) - dpr.current_term())*2/10
+    rem_credits = degree.hours_rem
+    if rem_semesters < 1: 
+      cps = np.inf if rem_credits > 0 else 0
+    else:
+      cps = float(rem_credits) / float(rem_semesters)
+
+    # return the appropriate response
+    warning = None
+    if cps == np.inf:
+      return dpr.DPRWarning(4, "graduation not possible by intended date")
+    if cps > 11.9:
+      return dpr.DPRWarning(3, "courses per semester >= 4")
+    if cps > 8.9:
+      return dpr.DPRWarning(2, "courses per semester >= 3")
+    if cps > 5.9:
+      return dpr.DPRWarning(1, "courses per semester >= 2")
+
+    return None
 
 

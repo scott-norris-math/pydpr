@@ -1,15 +1,3 @@
-'''
-TODO:  
-
-Need to implement a general, object-based functionality whereby departments 
-create their own warning criteria, in the department's Major definition file.
-It should be expected that all MDCs have a callable warning_list() function,
-the results of which are then added to the global warning list in the DPR
-report (which departments can *not* edit).
-
-'''
-
-
 import copy
 import time
 import os.path
@@ -95,10 +83,6 @@ class MissingFileError(Error):
 
 
 
-"""
-This function reads $queryfile [which is assumed to be an XLSX file] looking for a given $studentID in column 0.  If the student ID is found, then demographic information is read from the row.  At the moment, the columns associated with each piece of information are hard-coded.  This could be set up in a configuration file if desired.
-"""
-
 def find_student(studentfile, fragment):
 
   # open the excel file
@@ -148,20 +132,19 @@ def find_student(studentfile, fragment):
 
 
 def load_student_from_query(queryfile, studentID):
+  """
+  This function reads $queryfile [which is assumed to be an XLSX file] looking for a given $studentID in column 0.  If the student ID is found, then demographic information is read from the row.  At the moment, the columns associated with each piece of information are hard-coded.  This could be set up in a configuration file if desired.
+  """
 
   # read the list of students
   wb = load_workbook(queryfile)
   ws = wb[wb.get_sheet_names()[0]]
 
-  # find the indicated student
-  #for a in ws:
-  #  print a[0].value
-
+  # get desired student from the list
   record = [a for a in ws if str(a[0].value) == str(studentID)]
   if len(record) == 0:
     print("Student ID %s not found in student file %s." % (studentID, queryfile))
     raise MissingStudentError(studentID, queryfile)
-
 
   # extract a summary of the student's information
   s = Student()
@@ -189,16 +172,11 @@ def load_student_from_query(queryfile, studentID):
 
 
 
-# this function reads a course history from a single text file, 
-# that results from copying the my.SMU course history table,
-# and pasting it into a text file.
-
-
-"""
-This function reads $queryfile [which is assumed to be an XLSX file] looking for all rows containing a given $studentID in column 0.  Each row is assumed to represent a course taken by that student, and course details are read from the row, resulting in a list of Course() data structures.  At the moment, the columns associated with each piece of course information are hard-coded.  This could be set up in a configuration file if desired.
-"""
 
 def load_courses_from_query(queryfile, studentID):
+  """
+  This function reads $queryfile [which is assumed to be an XLSX file] looking for all rows containing a given $studentID in column 0.  Each row is assumed to represent a course taken by that student, and course details are read from the row, resulting in a list of Course() data structures.  At the moment, the columns associated with each piece of course information are hard-coded.  This could be set up in a configuration file if desired.
+  """
 
   wb   = load_workbook(queryfile)
   ws   = wb[wb.get_sheet_names()[0]]
@@ -289,6 +267,13 @@ def convert_term_name(termname):
 
 
 
+def unplanned_terms(student, coursehistory):
+
+  gradterm = int(student.gterm)
+  last_planned = int(max([c.term for c in coursehistory]))
+  unplanned = (gradterm - last_planned) / 5
+  return unplanned
+
 
 
 # =====================================
@@ -297,19 +282,18 @@ def convert_term_name(termname):
 
 
 
-'''
-class Student()
-----------------
-A Student is an object for storing student information.  This includes
-- student ID
-- last name
-- first name
-- email address
-- graduation date
-- degree and specialization
-'''
 
 class Student:
+  '''
+  A Student is an object for storing student information.  This includes
+
+  - student ID
+  - last name
+  - first name
+  - email address
+  - graduation date
+  - degree and specialization
+  '''
 
   def __init__(self, ID="", lname="", fname="", email="", gcode="", degree="", subtype="", gyear="", aterm="", gterm="", degreecode="", speccode=""):
 
@@ -328,24 +312,19 @@ class Student:
 
 
 
-
-'''
-class Course()
-----------------
-A Course is an object for storing courses that have been taken or are being taken.  Field include
-- course code
-- course title
-- term
-- grade
-- credits
-- credit status
-'''
-
-# A Course is just a record of a course that is being taken or has been taken.
-# It is a simple object with several fields decribing the course code, name, term,
-# grade, credits, and status.
-
 class Course:
+  '''
+  class Course()
+  ----------------
+  A Course is an object for storing courses that have been taken or are being taken.  Field include
+  - course code
+  - course title
+  - term
+  - grade
+  - credits
+  - credit status
+  '''
+
 
   def __init__(self, code=None, name=None, term=None, grade=None, credits=0, status=None):
 
@@ -359,16 +338,18 @@ class Course:
     self.status = status
 
 
-'''
-Requirement()
----------------
-The most basic building block for describing degrees, a Requirement is simply a list of courses, with a parameter specifying the minimum number of such courses that must be taken.  Examples include
 
-- a single, absolutely-required course       Requirement("Calc I", ["MATH 1337"], 1)
-- a certain number of courses from a list    Requirement("Two Science", ["", "", "", ...], 2)
-'''
 
-class Requirement(object):
+class Requirement:
+  '''
+  Requirement()
+  ---------------
+  The most basic building block for describing degrees, a Requirement is simply a list of courses, with a parameter specifying the minimum number of such courses that must be taken.  Examples include
+
+  - a single, absolutely-required course       Requirement("Calc I", ["MATH 1337"], 1)
+  - a certain number of courses from a list    Requirement("Two Science", ["", "", "", ...], 2)
+  '''
+
 
   def __init__(self, name, courselist, mincourses=0, minhours=0, greedy=False):
 
@@ -452,18 +433,14 @@ class Requirement(object):
 
 
 
-'''
-Group()
--------------
-A Group is the main organizing class for degrees, in that a Degree is simply a list of Groups.  In turn, a Group is a list of Requirements, supplemented by an (optional) list of Verifications.  The only difference between a Requirement and a Verification is that a Verification is not exclusive -- i.e. a single class can work toward satisfying multiple Verifications, whereas it can only satisfy a single Requirement within a Degree.
-'''
 
+class Group:
+  '''
+  Group()
+  -------------
+  A Group is the main organizing class for degrees, in that a Degree is simply a list of Groups.  In turn, a Group is a list of Requirements, supplemented by an (optional) list of Verifications.  The only difference between a Requirement and a Verification is that a Verification is not exclusive -- i.e. a single class can work toward satisfying multiple Verifications, whereas it can only satisfy a single Requirement within a Degree.
+  '''
 
-# ----------------------------------------------------
-# A Group a list of requirements, plus verifications.
-# ----------------------------------------------------
-
-class Group(object):
 
   def __init__(self, name=None, reqlist=None, verlist=None):
 
@@ -508,11 +485,14 @@ class Group(object):
     return
 
 
-# ------------------------------
-# A Degree is a list of Groups.
-# ------------------------------
+
+
 
 class Degree:
+   # ------------------------------
+   # A Degree is a list of Groups.
+   # ------------------------------
+
 
   def __init__(self, name=None, grplist=None):
 
@@ -534,7 +514,6 @@ class Degree:
     self.warning_checks_general.append(check_GPA_lastsemester)
     self.warning_checks_general.append(check_GPA_decrease)
     self.warning_checks_general.append(check_degree_GPA)
-    self.warning_checks_general.append(check_credits_per_semester)
 
 
   def add_group(self, group):
@@ -595,28 +574,13 @@ The idea here is to abstract the idea of a DPR warning, so that red-flag conditi
 Not implemented yet -- currently red flags are caught in the class called ProgressReport() in this file.
 '''
 
-class DPRWarning():
 
-  def __init__(self, checker, template, lookup):
+class DPRWarning:
 
-    self.checker  = checker		# a callback function of the form check(student, coursehistory, degree)
-    self.template = template	# a templated string reporting the warning if checker returns true
-    self.lookup   = lookup		# 
-    '''
-    What if checker() returns [template, lookupdict]?
-    What if checker() simply returns the warning string?
-    '''
+  def __init__(self, level, message):
+    self.level   = level
+    self.message = message
 
-  def check(self, student, coursehistory, degree):
-    pass
-
-  def render(self, color=False):
-    if color:
-      warnstring = Fore.RED+"Warning:"+Style.RESET_ALL+"  "
-    else:
-      warnstring = "Warning:  "
-    warnstring +=  string.Template(self.template).substitute(self.lookup)
-    return warnstring
 
 
 
@@ -625,21 +589,30 @@ def check_dropfails_lastyear(student, coursehistory, degree, threshhold=2.0):
     this_term = int(current_term())
     last_term = this_term - 5
     last_year = this_term - 10
+    lycourses = [cc for cc in coursehistory if int(cc.term) >= last_year]
 
     # count dropped or failed courses last semester
-    dropfailset = set(['W', 'F', 'D-', 'D', 'D+'])
-    dropfails = len([cc for cc in coursehistory if int(cc.term) >= last_year and cc.grade in dropfailset])
+    failset = set(['F'])
+    weakset = set(['D-', 'D', 'D+'])
+    dropset = set(['W', 'WF', 'WP', 'I'])
+    fails = len([cc for cc in lycourses if cc.grade in failset])
+    weaks = len([cc for cc in lycourses if cc.grade in weakset])
+    drops = len([cc for cc in lycourses if cc.grade in dropset])
+    score   = (3*fails + 2*weaks + 1*drops) / 2
 
-    # return the appropriate response
-    warning = None
-    if dropfails > threshhold:
-      warning = "several drops/fails last year (%d)" % (dropfails)
-    return warning
+    if score > 12:
+      return DPRWarning(4, "very large number of drops/fails in past year")
+    if score > 9:
+      return DPRWarning(4, "large number of drops/fails in past year")
+    if score > 6:
+      return DPRWarning(4, "medium number of drops/fails in past year")
+    if score > 3:
+      return DPRWarning(4, "small number of drops/fails in past year")
+    return None
 
 
 
-
-def check_GPA_lastsemester(student, coursehistory, degree, threshhold=2.0):
+def check_GPA_lastsemester(student, coursehistory, degree):
 
     this_term = int(current_term())
 
@@ -653,10 +626,15 @@ def check_GPA_lastsemester(student, coursehistory, degree, threshhold=2.0):
     last_GPA = np.dot(gpoints, credits) / sum(credits)
 
     # return the appropriate response
-    warning = None
-    if last_GPA < threshhold:
-      warning = "low GPA last semester (%2.2f)" % (last_GPA)
-    return warning
+    if last_GPA < 1.0:
+      return DPRWarning(4, "low GPA last semester (%2.2f)" % (last_GPA))
+    if last_GPA < 1.5:
+      return DPRWarning(3, "low GPA last semester (%2.2f)" % (last_GPA))
+    if last_GPA < 2.0:
+      return DPRWarning(2, "low GPA last semester (%2.2f)" % (last_GPA))
+    if last_GPA < 2.5:
+      return DPRWarning(1, "low GPA last semester (%2.2f)" % (last_GPA))
+    return None
 
 
 
@@ -679,11 +657,18 @@ def check_GPA_decrease(student, coursehistory, degree, threshhold=2.0):
     credits2 = np.array([cc.credits for cc in courses_l2])
     last_GPA2 = np.dot(gpoints2, credits2) / sum(credits2)
 
+    decline = last_GPA2 - last_GPA1
+
     # return the appropriate response
-    warning = None
-    if last_GPA2 - last_GPA1 > 0.5 and last_GPA1 < 2.5:
-      warning = "significant GPA decline (%2.2f --> %2.2f)" % (last_GPA2, last_GPA1)
-    return warning
+    if decline > 2.0:
+      return DPRWarning(4, "v. large GPA decline (%2.2f --> %2.2f)" % (last_GPA2, last_GPA1))
+    if decline > 1.5:
+      return DPRWarning(3, "large GPA decline (%2.2f --> %2.2f)" % (last_GPA2, last_GPA1))
+    if decline > 1.0:
+      return DPRWarning(2, "medium GPA decline (%2.2f --> %2.2f)" % (last_GPA2, last_GPA1))
+    if decline > 0.5:
+      return DPRWarning(1, "small GPA decline (%2.2f --> %2.2f)" % (last_GPA2, last_GPA1))
+    return None
 
 
 
@@ -703,91 +688,16 @@ def check_degree_GPA(student, coursehistory, degree, threshhold=2.0):
     degree_GPA = np.dot(gpoints, credits) / sum(credits)
   
     # return the appropriate response
-    warning = None
-    if degree_GPA < threshhold:
-      warning = "low degree GPA (%2.2f)" % (degree_GPA)
-    return warning
+    if degree_GPA < 1.66:
+      return DPRWarning(4, "prohibitively low degree GPA")
+    if degree_GPA < 2.00:
+      return DPRWarning(3, "dangerously low degree GPA")
+    if degree_GPA < 2.33:
+      return DPRWarning(2, "very low degree GPA")
+    if degree_GPA < 2.66:
+      return DPRWarning(1, "low degree GPA")
+    return None
 
-
-
-def check_credits_per_semester(student, coursehistory, degree, threshhold=6.0):
-
-    # assess remaining credits and semesters
-    rem_semesters = (int(student.gterm) - current_term())*2/10
-    rem_credits = degree.hours_rem
-    if rem_semesters < 1: 
-      credits_per_semester = np.inf if self.degree_rem_credits > 0 else 0
-    else:
-      credits_per_semester = float(rem_credits) / float(rem_semesters)
-
-    # return the appropriate response
-    warning = None
-    if credits_per_semester > threshhold:
-      warning = "need %d credits over %d semesters" % (rem_credits, rem_semesters)
-    return warning
-
-
-
-
-
-# -------------------------------
-#    Reporting Capabilities
-# -------------------------------
-
-'''
-Halfway solution to a clean implementation of degree red flags.  All red flags are hard-coded into this object.
-'''
-
-class ProgressReport:
-
-  def __init__(self, student, coursehistory, degree):
-
-    self.last_GPA = None
-    self.last_credits = None
-    self.last_year_fails = None
-    self.degree_GPA = None
-    self.degree_rem_credits = None
-    self.degree_rem_semesters = None
-    self.degree_credits_per_semester = None
-
-    this_term = int(current_term())
-    last_term = this_term - 5
-    last_year = this_term - 10
-
-    # get last semester's courses
-    courses_ls = [cc for cc in coursehistory if int(cc.term) == last_term and cc.grade in GPAgrades]
-
-    # calculate last semester's GPA
-    gpoints = np.array([GPAlookup[cc.grade] for cc in courses_ls]) 
-    credits = np.array([cc.credits for cc in courses_ls])
-    self.last_credits = sum(credits)
-    self.last_GPA = np.dot(gpoints, credits) / sum(credits)
-
-    # count failed courses last semester
-    failset = set(['F', 'D-', 'D', 'D+'])
-    courses_ly = [cc for cc in coursehistory if int(cc.term) >= last_year and cc.grade in GPAgrades]
-    self.last_year_fails = len([cc for cc in courses_ly if cc.grade in failset])
-
-    # get all degree courses
-    degcourses = []
-    for grp in degree.grplist:
-      for cc in grp.satcourses:
-        degcourses.append(cc)
-
-    # calculate degree GPA
-    degcourseset = set([cc.code for cc in degcourses])
-    alldegcourses = [cc for cc in coursehistory if cc.code in degcourseset and cc.grade in GPAgrades]
-    gpoints = np.array([GPAlookup[cc.grade] for cc in alldegcourses]) 
-    credits = np.array([cc.credits for cc in alldegcourses])
-    self.degree_GPA = np.dot(gpoints, credits) / sum(credits)
-  
-    # assess remaining credits and semesters
-    self.degree_rem_semesters = (int(student.gterm) - current_term())*2/10
-    self.degree_rem_credits = degree.hours_rem
-    if self.degree_rem_semesters < 1: 
-      self.degree_credits_per_semester = np.inf if self.degree_rem_credits > 0 else 0
-    else:
-      self.degree_credits_per_semester = float(self.degree_rem_credits) / float(self.degree_rem_semesters)
 
 
 
@@ -796,10 +706,6 @@ class ProgressReport:
 # ================================================
 #     reporting and visualization
 # ================================================
-
-
-
-
 
 
 def terminal_courselist(student, courselist, degree):
@@ -816,121 +722,121 @@ def terminal_courselist(student, courselist, degree):
 
 
 
-'''
-terminal_report()
------------------
-This prints a report of the student's progress to the terminal, using Colorama for colored text.
-'''
+
 
 def terminal_report(student, courselist, degree):
+  '''
+  terminal_report()
+  -----------------
+  This prints a report of the student's progress to the terminal, using Colorama for colored text.
+  '''
 
 
-    # get a ProgressReport
-    pr = ProgressReport(student, courselist, degree)
+  if degree.complete:
+    dstatus = Fore.GREEN+"Complete!"+Style.RESET_ALL
+  else:
+    dstatus = Fore.RED+"Inomplete."+Style.RESET_ALL
 
-    # Assessment of Degree progress
-    credits_per_sem = pr.degree_credits_per_semester
-    credit_rating = ""
-    if   credits_per_sem == 0.0:  credit_rating = Fore.CYAN    + 'COMPLETE!!'  + Style.RESET_ALL
-    elif credits_per_sem <= 3.0:  credit_rating = Fore.GREEN   + 'good.'       + Style.RESET_ALL
-    elif credits_per_sem <= 4.5:  credit_rating = Fore.YELLOW  + 'acceptable.' + Style.RESET_ALL
-    elif credits_per_sem <= 6.0:  credit_rating = Fore.YELLOW  + 'caution ...' + Style.RESET_ALL
-    elif credits_per_sem <= 7.5:  credit_rating = Fore.RED     + 'concern!'    + Style.RESET_ALL
-    else:                         credit_rating = Fore.MAGENTA + 'CRITICAL!!'  + Style.RESET_ALL
-    credit_report = "needs %d credits over %d semesters: %s" % (pr.degree_rem_credits, pr.degree_rem_semesters, credit_rating)
+  # student and degree information
+  report  = "\n\n"
+  report += student.lname + ", " + student.fname + "\n"
+  report += "-"*25 + "\n"
+  report += "SMU ID:      " + str(student.ID) + "\n"
+  report += "Email:       " + str(student.email) + "\n"
+  report += "Admitted:    " + termcode_to_text(student.aterm) + "\n"
+  report += "Graduates:   " + termcode_to_text(student.gterm) + "\n"
+  report += "Degree:      " + str(degree.name) + "\n"
+  report += "Status:      " + dstatus + "\n"
+  report += "\n"
 
-    # student and degree information
-    report  = "\n\n"
-    report += student.lname + ", " + student.fname + "\n"
-    report += "-"*25 + "\n"
-    report += "SMU ID:      " + str(student.ID) + "\n"
-    report += "Email:       " + str(student.email) + "\n"
-    report += "Admitted:    " + termcode_to_text(student.aterm) + "\n"
-    report += "Graduates:   " + termcode_to_text(student.gterm) + "\n"
-    report += "Degree:      " + str(degree.name) + "\n"
-    report += "Status:      " + str(credit_report) + "\n"
-    report += "\n"
+  # loop through the groups
+  for grp in degree.grplist:
 
-    # loop through the groups
-    for grp in degree.grplist:
+    grpstatus = Fore.GREEN+'satisfied'+Style.RESET_ALL if grp.satisfied else Fore.RED+'not satisfied'+Style.RESET_ALL
+    report += "{0:24}: {1:16}".format(grp.name, grpstatus) + '\n'
+    report += '-'*64 + '\n'
 
-      grpstatus = Fore.GREEN+'satisfied'+Style.RESET_ALL if grp.satisfied else Fore.RED+'not satisfied'+Style.RESET_ALL
-      report += "{0:24}: {1:16}".format(grp.name, grpstatus) + '\n'
-      report += '-'*64 + '\n'
+    # now loop through the requirements
+    for req in grp.reqlist:
+      nullcourse = Course()
+      nullcourse.term = '(none)'
+      nullcourse.code = '(none)'
+      nullcourse.grade = '-'
+      counter = 0
 
-      # now loop through the requirements
-      for req in grp.reqlist:
-        nullcourse = Course()
-        nullcourse.term = '(none)'
-        nullcourse.code = '(none)'
-        nullcourse.grade = '-'
-        counter = 0
+      if (req.minhours > 0):
+        sathours = sum([cc.credits for cc in req.satcourses])
+        remhours = max(0, req.minhours - sathours)
+        for kk,cc in enumerate(req.satcourses):
+          counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk+1)
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+        blanklns = int(np.ceil(remhours / 3.0))
+        cc = nullcourse
+        for kk in range(blanklns):
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
-        if (req.minhours > 0):
-          sathours = sum([cc.credits for cc in req.satcourses])
-          remhours = max(0, req.minhours - sathours)
-          for kk,cc in enumerate(req.satcourses):
-            counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk+1)
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
-          blanklns = int(np.ceil(remhours / 3.0))
-          cc = nullcourse
-          for kk in range(blanklns):
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+      if (req.mincourses > 0):
+        for kk in range(req.mincourses):
+          counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
+          cc = nullcourse if len(req.satcourses) <= kk else req.satcourses[kk]
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
-        if (req.mincourses > 0):
-          for kk in range(req.mincourses):
-            counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
-            cc = nullcourse if len(req.satcourses) <= kk else req.satcourses[kk]
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
-
-      # now loop through verifications
-      for ver in grp.verlist:
-        reqstatus = Fore.GREEN+'satisfied'+Style.RESET_ALL if ver.satisfied else Fore.RED+'not satisfied'+Style.RESET_ALL
-        report += '{0:24}: {1}'.format(ver.name, reqstatus) + '\n'
-      report += '\n\n'
-
-
-    # General Warnings
-    if len(degree.warnings_general) > 0:
-      #report += 'General Warnings\n'
-      #report += '--------------------\n'
-      for warning in degree.warnings_general:
-        report += Fore.RED+"Warning:"+Style.RESET_ALL+"  " + warning + '.\n'
-
-    # Degree-Specific Warnings
-    if len(degree.warnings_major) > 0:
-      #report += 'Degree Plan Warnings\n'
-      #report += '--------------------\n'
-      for warning in degree.warnings_major:
-        report += Fore.RED+"Warning:"+Style.RESET_ALL+"  " + warning + '.\n'
-
-
+    # now loop through verifications
+    for ver in grp.verlist:
+      reqstatus = Fore.GREEN+'satisfied'+Style.RESET_ALL if ver.satisfied else Fore.RED+'not satisfied'+Style.RESET_ALL
+      report += '{0:24}: {1}'.format(ver.name, reqstatus) + '\n'
     report += '\n\n'
-    return report
+
+
+  # General Warnings
+  if len(degree.warnings_general) > 0:
+    #report += 'General Warnings\n'
+    #report += '--------------------\n'
+    for w in degree.warnings_general:
+      if w.level == 1:
+        prefix = Fore.CYAN    + "Caution:  " + Style.RESET_ALL
+      if w.level == 2:
+        prefix = Fore.YELLOW  + "Concern:  " + Style.RESET_ALL
+      if w.level == 3:
+        prefix = Fore.RED     + "Warning:  " + Style.RESET_ALL
+      if w.level == 4:
+        prefix = Fore.MAGENTA + "PROBLEM:  " + Style.RESET_ALL
+      report += prefix + w.message + ".\n"
+
+
+  # Degree-Specific Warnings
+  if len(degree.warnings_major) > 0:
+    #report += 'Degree Plan Warnings\n'
+    #report += '--------------------\n'
+    for w in degree.warnings_major:
+      if w.level == 1:
+        prefix = Fore.CYAN    + "Caution:  " + Style.RESET_ALL
+      if w.level == 2:
+        prefix = Fore.YELLOW  + "Concern:  " + Style.RESET_ALL
+      if w.level == 3:
+        prefix = Fore.RED     + "Warning:  " + Style.RESET_ALL
+      if w.level == 4:
+        prefix = Fore.MAGENTA + "PROBLEM:  " + Style.RESET_ALL
+      report += prefix + w.message + ".\n"
+
+  report += '\n\n'
+  return report
 
 
 
-'''
-terminal_report()
------------------
-This saves a textual report of the student's progress to the file $ID.pdf.
-'''
+
 
 def pdf_report(student, courselist, degree, pdfname):
+    '''
+    pdf_report()
+    -----------------
+    This saves a textual report of the student's progress to the file $ID.pdf.
+    '''
 
-    # get a ProgressReport
-    pr = ProgressReport(student, courselist, degree)
-
-    # Assessment of Degree progress
-    credits_per_sem = pr.degree_credits_per_semester
-    credit_rating = ""
-    if   credits_per_sem == 0.0:  credit_rating = 'COMPLETE!!'
-    elif credits_per_sem <= 3.0:  credit_rating = 'good.'
-    elif credits_per_sem <= 4.5:  credit_rating = 'acceptable.'
-    elif credits_per_sem <= 6.0:  credit_rating = 'caution ...'
-    elif credits_per_sem <= 7.5:  credit_rating = 'concern!'
-    else:                         credit_rating = 'CRITICAL!!'
-    credit_report = "needs %d credits over %d semesters: %s" % (pr.degree_rem_credits, pr.degree_rem_semesters, credit_rating)
+    if degree.complete:
+      dstatus = "Complete!"
+    else:
+      dstatus = "Inomplete."
 
     # student and degree information
     report  = ""
@@ -941,7 +847,7 @@ def pdf_report(student, courselist, degree, pdfname):
     report += "Admitted:    " + termcode_to_text(student.aterm) + "\n"
     report += "Graduates:   " + termcode_to_text(student.gterm) + "\n"
     report += "Degree:      " + str(degree.name) + "\n"
-    report += "Status:      " + str(credit_report) + "\n"
+    report += "Status:      " + dstatus + "\n"
     report += "\n\n"
 
     # loop through the groups
@@ -1018,11 +924,13 @@ def pdf_report(student, courselist, degree, pdfname):
 
 
 
-'''
-Uses Matplotlib to bring up a plot of the student's GPA progression.
-'''
+
 
 def plot_gpa_progression(courselist):
+  '''
+  Uses Matplotlib to bring up a plot of the student's GPA progression.
+  '''
+
   terms  = [c.term for c in courselist]
   uterms = np.unique(terms)
   sterms = np.sort(uterms)
@@ -1035,7 +943,7 @@ def plot_gpa_progression(courselist):
     courses     = [c for c in courselist if (c.term == term and c.grade in GPAgrades)]
     credits[kk] = sum([c.credits for c in courses])
     gpoints[kk] = sum([c.credits*GPAlookup[c.grade] for c in courses])
-    GPA[kk]     = gpoints[kk] / credits[kk] if credits[kk] > 0 else 0
+    GPA[kk]     = gpoints[kk] / credits[kk] if credits[kk] > 0 else 4.0
 
   totalGPA = sum(gpoints) / sum(credits)
 
@@ -1060,11 +968,12 @@ def plot_gpa_progression(courselist):
   fig, ax = plt.subplots(figsize=(6,4))
 
   # background
-  ax.axhspan(0.0, 2.0, alpha=0.5, color='red')
-  ax.axhspan(2.0, 2.7, alpha=0.5, color='orange')
-  ax.axhspan(2.7, 3.3, alpha=0.5, color='yellow')
-  ax.axhspan(3.3, 3.7, alpha=0.5, color='greenyellow')
-  ax.axhspan(3.7, 4.3, alpha=0.5, color='green')
+  ax.axhspan(0.00, 1.00, alpha=0.5, color='magenta')
+  ax.axhspan(1.00, 1.66, alpha=0.5, color='red')
+  ax.axhspan(1.66, 2.33, alpha=0.5, color='orange')
+  ax.axhspan(2.33, 3.00, alpha=0.5, color='yellow')
+  ax.axhspan(3.00, 3.66, alpha=0.5, color='greenyellow')
+  ax.axhspan(3.67, 4.33, alpha=0.5, color='green')
 
   # GPA circles and average value
   ax.scatter(aterms, GPA, s=25*credits, color='white', marker='o', alpha=0.66, zorder=5)
@@ -1075,7 +984,8 @@ def plot_gpa_progression(courselist):
   xmax = np.ceil(max(aterms))
   plt.xlim(xmin, xmax)
   plt.xticks(np.arange(xmin, xmax+1))
-  plt.ylim(1,4.1)
+  myylim = min(1.33, min(GPA))
+  plt.ylim(myylim - .33, 4.33)
   plt.title('Overall GPA is %1.3f' % (totalGPA))
   plt.xlabel('Term')
   plt.tight_layout()
