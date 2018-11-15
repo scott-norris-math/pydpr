@@ -9,21 +9,45 @@ coursesfile = './records/current-coursehistories.xlsx'
 fragment = sys.argv[1]
 studentID = dpr.find_student(studentfile, fragment)
 
-# is there a filter?
-dfilter   = False
-if len(sys.argv) > 2:
-  dfilter = True
-  dept = sys.argv[2]
+
+sortkey = 'term'
+try:
+  sortkey = sys.argv[2]
+except:
+  pass
+
+
+if sortkey == 'term':  sortfunc = lambda course: course.term
+if sortkey == 'code':  sortfunc = lambda course: course.code
+
+
+tca = 0
+tcp = 0
+tgp = 0
 
 courselist = dpr.load_courses_from_query(coursesfile, studentID)
-courselist.sort(key=lambda course: course.term)
+courselist.sort(key=sortfunc)
 for cc in courselist:
   if cc.credits == 0: 
     continue
-  if dfilter == True and cc.dept != dept:
-    continue
 
   print("{0:4} {1:4} --> {2:16} --> {3:4} {4:4}".format(cc.dept, cc.number, dpr.termcode_to_text(cc.term), cc.credits, cc.grade))
+
+  credits = cc.credits
+  gpoints = dpr.get_gradepoints(cc.grade)
+  if (gpoints != None):
+    tca += int(credits)
+    tgp += float(gpoints)*float(credits)
+    tcp += (int(credits) if gpoints > 0 else 0)
+  
+
+
+
+print("--------------------------------------------")
+print("                                   %4d %2.2f" % (tcp, float(tgp)/float(tca) )  )
+
+
+
 
 print('\n')
 

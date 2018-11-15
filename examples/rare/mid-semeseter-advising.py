@@ -1,6 +1,7 @@
+import os
 import sys
 import string
-from os.path import basename
+
 
 # for reading XLSX files
 from openpyxl import load_workbook
@@ -17,15 +18,17 @@ import pydpr.pydpr as dpr
 from pydpr.degrees.Math import create_degree, autodetect_eng_specialization
 
 
-termtext = "Spring 2018"
-ycbmlink = "http://smu-snorris.ycb.me"
+termtext = "Spring 2019"
+ycbmlink = "http://smumath.ycb.me"
 
 
 # files with student and course histories
 studentfile  = './records/current-mathmajors.xlsx'
 coursesfile  = './records/current-coursehistories.xlsx'
+
 done_email   = './documents/advising-email-template-complete.txt'
 active_email = './documents/advising-email-template-inprogress.txt'
+
 catalogfile  = './documents/2016-math-catalog.pdf'
 advicefile   = './documents/general-advice.pdf'
 changesfile  = './documents/2017-math-curricular-changes.pdf'
@@ -51,9 +54,9 @@ success = 0
 try:
   print("Logging in: ")
   smtp = SMTP_SSL('smtp.smu.edu:465')
-  smtp.login('01370901', 'password')
+  smtp.login('01370901', 'EfT36Fee17')
   success = 1
-  print("success!")
+  print("login successful!")
 except SMTPException:
   print("Error: unable to login.")
   exit()
@@ -67,10 +70,8 @@ ws = wb[wb.get_sheet_names()[0]]
 IDS = []
 for row in ws:
   ID = str(row[0].value)
-  major = str(row[22].value)
-  print(ID)
+  major = str(row[24].value)
   if major in majors:  IDS.append(ID)
-
 
 
 for studentID in IDS:
@@ -78,35 +79,24 @@ for studentID in IDS:
   # load student information
   try:
     student = dpr.load_student_from_query(studentfile, studentID)
-  except dpr.MissingStudentError as mse:
-    print("StudentID %s not found in course file %s." % (studentID, studentfile))
-    print("This shouldn't happen.  Something is very wrong.")
-    quit()
-    exit()
-
-
-  # load course information
-  try:
     courses = dpr.load_courses_from_query(coursesfile, studentID)
     autodetect_eng_specialization(student, courses)
+    degree = create_degree(student.degreecode, student.speccode)
+    degree.check(courses)
+
+    pdfreport = "math-dpr-%s.pdf"%(studentID)
+    dpr.pdf_report(student, courses, degree, pdfreport)
+
+  except dpr.MissingStudentError as mse:
+    print("StudentID %s not found in student file %s." % (studentID, studentfile))
+    print("Skipping this student (but this shouldn't happen!).")
+    continue
   except dpr.MissingCoursesError as mce:
     print("StudentID %s not found in course file %s." % (studentID, coursesfile))
     print("Skipping this student.")
     continue
-
-
-  # create degree plan and check requirements
-  try:
-    degree = create_degree(student.degreecode, student.speccode)
-    degree.check(courses)
-
-    # create a PDF report of the student's progress
-    pdfreport = "math-dpr-%s.pdf"%(studentID)
-    dpr.pdf_report(student, courses, degree, pdfreport)
   except Exception as ee:
-    print("This shouldn't happen.  Something is very wrong.")
-    quit()
-    exit()
+    raise(ee)
 
 
   # has the student graduated or not?
@@ -118,7 +108,6 @@ for studentID in IDS:
   else:
     myemail = active_template
     myattach.extend(active_attach)
-
 
 
 
@@ -145,15 +134,12 @@ for studentID in IDS:
   msg.attach(MIMEText(body))
 
   # add attachments
-  allattach = [pdfreport]
-  allattach.extend(myattach)
-  print(allattach)
-  for f in allattach:
+  for f in myattach:
     with open(f, "rb") as fil:
       msg.attach(MIMEApplication(
         fil.read(),
-        Content_Disposition='attachment; filename="%s"' % basename(f),
-        Name=basename(f)
+        Content_Disposition='attachment; filename="%s"' % os.path.basename(f),
+        Name=os.path.basename(f)
       ))
 
   # send message
@@ -165,6 +151,8 @@ for studentID in IDS:
       print("Error: unable to send email to %s" % (student.email))
   else:
     print(body)
+    print(myattach)
+    print("\n\n")
 
 
 

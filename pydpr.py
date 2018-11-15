@@ -21,6 +21,7 @@ GPAlookup = dict()
 GPAlookup[' '] = 4.0
 GPAlookup['NOW'] = 4.0
 GPAlookup['CR'] = 4.0
+
 GPAlookup['A']  = 4.0
 GPAlookup['A-'] = 3.7
 GPAlookup['B+'] = 3.3
@@ -29,11 +30,11 @@ GPAlookup['B-'] = 2.7
 GPAlookup['C+'] = 2.3
 GPAlookup['C']  = 2.0
 GPAlookup['C-'] = 1.7
-
 GPAlookup['D+'] = 1.3
 GPAlookup['D']  = 1.0
 GPAlookup['D-'] = 0.7
 GPAlookup['F']  = 0.0
+
 GPAlookup['W'] = 0.0
 GPAlookup['I'] = 0.0
 GPAlookup['P'] = 0.0
@@ -42,11 +43,20 @@ GPAlookup['ED+'] = 1.3
 GPAlookup['ED'] = 1.0
 GPAlookup['ED-'] = 0.7
 GPAlookup['EF'] = 0.0
-
 GPAlookup['TD'] = 1.0
 GPAlookup['TF'] = 0.0
 
 GPAgrades = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
+
+
+def get_gradepoints(grade):
+
+  if grade in GPAgrades:
+    return GPAlookup[grade]
+  else:
+    return None
+
+
 
 
 class Error(Exception):

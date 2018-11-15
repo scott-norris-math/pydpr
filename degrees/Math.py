@@ -39,7 +39,7 @@ ADV  = PURE|APPL|COMP
 APNU = APPL|COMP
 
 
-CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CEE 3310'] )
+CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CSE 2341', 'CSE 3353', 'CEE 3310'] )
 STAT = set( ['STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
 
 PHYS = set( ['PHYS 1303', 'PHYS 1304', 'PHYS 1105', 'PHYS 1106', 'PHYS 1403', 'PHYS 1404',] )
@@ -210,17 +210,17 @@ def detect_eng_specialization(student, courselist):
 def incomplete_foundation(student, coursehistory, degree):
 
   # get necessary information
-  now = dpr.current_term()
-  grad = int(student.gterm)
-  termsleft = (grad-now)/5
+  uterms = dpr.unplanned_terms(student, coursehistory)
   fcomp = degree.grplist[0].satisfied
 
   # return appropriate warning
-  if termsleft < 2 and not fcomp:
-    return dpr.DPRWarning(3, "Foundation incomplete with <= 2 semesters remaining.")
-  if termsleft < 4 and not fcomp:
+  if uterms <= 1 and not fcomp:
+    return dpr.DPRWarning(4, "Foundation incomplete with <= 2 semesters remaining.")
+  if uterms <= 2 and not fcomp:
+    return dpr.DPRWarning(3, "Foundation incomplete with <= 3 semesters remaining.")
+  if uterms <= 3 and not fcomp:
     return dpr.DPRWarning(2, "Foundation incomplete with <= 4 semesters remaining.")
-  if termsleft < 6 and not fcomp:
+  if uterms <= 4 and not fcomp:
     return dpr.DPRWarning(1, "Aim to complete foundation by the end of sophomore year.")
   return None
 
@@ -234,11 +234,13 @@ def pure_missing_3311(student, coursehistory, degree):
   unready = ('MATH 3311' not in ccodes and 'MATH 3308' not in ccodes)
 
   # return appropriate warning
-  if unready and uterms < 3:
-    return dpr.DPRWarning(3, "missing MATH 3311: Pure specializaion no longer possible.")
-  if unready and uterms < 4:
+  if uterms <= 1 and unready:
+    return dpr.DPRWarning(4, "missing MATH 3311: Pure specializaion impossible.")
+  if uterms <= 2 and unready:
+    return dpr.DPRWarning(3, "missing MATH 3311: Pure specializaion very unlikely.")
+  if uterms <= 3 and unready:
     return dpr.DPRWarning(2, "you must change your schedule to be enrolled in MATH 3311.")
-  if unready and uterms < 5:
+  if uterms <= 4 and unready:
     return dpr.DPRWarning(1, "make sure to take MATH 3311 as early as possible.")
 
   return None
@@ -252,12 +254,14 @@ def comp_missing_1341(student, coursehistory, degree):
   unready = ('CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP' not in ccodes)
 
   # return appropriate warning
-  if unready and uterms < 3:
-    return dpr.DPRWarning(3, "missing CSE 1341: CSE/EMIS specializaion no longer possible.")
-  if unready and uterms < 4:
-    return dpr.DPRWarning(2, "you need to change your schedule to be enrolled in CSE 1341.")
-  if unready and uterms < 5:
-    return dpr.DPRWarning(1, "it is best to take CSE 1341 by the end of Sophomore year.")
+  if uterms <= 2 and unready:
+    return dpr.DPRWarning(4, "missing CSE 1341: CSE/EMIS specializaion impossible.")
+  if uterms <= 3 and unready:
+    return dpr.DPRWarning(3, "missing CSE 1341: CSE/EMIS specializaion becoming unlikely.")
+  if uterms <= 4 and unready:
+    return dpr.DPRWarning(2, "you should change your schedule to be enrolled in CSE 1341.")
+  if uterms <= 5 and unready:
+    return dpr.DPRWarning(1, "it is best to take CSE 1341 by the beginning of Sophomore year.")
 
   return None
 
@@ -271,14 +275,14 @@ def anum_missing_1341(student, coursehistory, degree):
   unready = ('CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP' not in ccodes)
 
   # return appropriate warning
-  if unready and uterms < 2:
-    return dpr.DPRWarning(4, "missing CSE 1341: will not be able to graduate on time.")
-  if unready and uterms < 3:
-    return dpr.DPRWarning(3, "you won't graduate unless you add CSE 1341 to your schedule.")
-  if unready and uterms < 4:
-    return dpr.DPRWarning(2, "CSE 1341 not taken by the end of Junior year: inadvisable.")
-  if unready and uterms < 5:
-    return dpr.DPRWarning(1, "make sure to take CSE 1341 by the end of Junior year.")
+  if uterms <= 1 and unready:
+    return dpr.DPRWarning(4, "missing CSE 1341: on-time graduation impossible.")
+  if uterms <= 2 and unready:
+    return dpr.DPRWarning(3, "missing CSE 1341: on-time graduation becoming unlikely.")
+  if uterms <= 3 and unready:
+    return dpr.DPRWarning(2, "you should change your schedule to be enrolled in CSE 1341.")
+  if uterms <= 4 and unready:
+    return dpr.DPRWarning(1, "it is best to take CSE 1341 by the end of Sophomore year.")
 
   return None
 
@@ -291,11 +295,13 @@ def comp_missing_3315(student, coursehistory, degree):
   unready = ('MATH 3315' not in ccodes and 'MATH 3316' not in ccodes and 'CSE 3365' not in ccodes)
 
   # return appropriate warning
-  if unready and uterms < 2:
-    return dpr.DPRWarning(3, "missing MATH 3315: CSE/EMIS specializaion no longer possible.")
-  if unready and uterms < 3:
+  if uterms <= 1 and unready:
+    return dpr.DPRWarning(4, "missing MATH 3315: CSE/EMIS specializaion no longer possible.")
+  if uterms <= 2 and unready:
+    return dpr.DPRWarning(3, "missing MATH 3315: CSE/EMIS specializaion becoming unlikely.")
+  if uterms <= 3 and unready:
     return dpr.DPRWarning(2, "you need to change your schedule to be enrolled in MATH 3315.")
-  if unready and uterms < 4:
+  if uterms <= 4 and unready:
     return dpr.DPRWarning(1, "make sure to take MATH 3315 by Junior year at the latest.")
 
   return None
