@@ -105,7 +105,7 @@ def find_student(studentfile, fragment):
     ID    = str(row[0].value)
     lname = str(row[2].value)
     fname = str(row[3].value)
-    email = str(row[4].value)
+    email = str(row[6].value)
 
     fields = [ID, lname, fname, email]
     for kk,ff in enumerate(fields):
@@ -162,21 +162,21 @@ def load_student_from_query(queryfile, studentID):
   s.ID  = str(row[0].value)
   s.lname = row[2].value
   s.fname = row[3].value
-  s.email = row[4].value
-  s.degree = row[24].value
+  s.email = row[6].value
+  s.degree = row[26].value
   s.degreecode = s.degree.split('-')[1]
 
-  s.speccode = row[26].value
+  s.speccode = row[28].value
   if s.speccode != None:
     s.speccode = s.speccode.split('-')[1]
 
   # admit and expected graduation terms
-  s.aterm = str(row[16].value)
-  s.gterm = str(row[17].value)
+  s.aterm = str(row[18].value)
+  s.gterm = str(row[19].value)
 
   s.gyear  = 2000+int(s.gterm[1:3])
   s.gsess  = int(s.gterm[3])
-  s.gstatus = row[18].value
+  s.gstatus = row[20].value
 
   return s
 
@@ -699,13 +699,13 @@ def check_degree_GPA(student, coursehistory, degree, threshhold=2.0):
   
     # return the appropriate response
     if degree_GPA < 1.66:
-      return DPRWarning(4, "prohibitively low degree GPA")
+      return DPRWarning(4, "prohibitively low degree GPA: %2.2f" % (degree_GPA))
     if degree_GPA < 2.00:
-      return DPRWarning(3, "dangerously low degree GPA")
+      return DPRWarning(3, "dangerously low degree GPA: %2.2f" % (degree_GPA))
     if degree_GPA < 2.33:
-      return DPRWarning(2, "very low degree GPA")
+      return DPRWarning(2, "very low degree GPA: %2.2f" % (degree_GPA))
     if degree_GPA < 2.66:
-      return DPRWarning(1, "low degree GPA")
+      return DPRWarning(1, "low degree GPA: %2.2f" % (degree_GPA))
     return None
 
 
