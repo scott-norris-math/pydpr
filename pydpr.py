@@ -397,6 +397,7 @@ class Requirement:
       satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and GPAlookup[cc.grade] > 1.5)]
       if satisfying_course != []:
         templist.append(satisfying_course[0])
+    templist.sort(key = lambda course: (course.term, course.code))
     self.satcourses.extend(templist)
 
     # now find satisfying courses that are *not* in the verification list
@@ -405,6 +406,7 @@ class Requirement:
       satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and GPAlookup[cc.grade] > 1.5)]
       if satisfying_course != []:
         templist.append(satisfying_course[0])
+    templist.sort(key = lambda course: (course.term, course.code))
     self.satcourses.extend(templist)
 
     # check satisfaction and obtain remaining hours
@@ -418,7 +420,6 @@ class Requirement:
         cumhours += course.credits
       self.satisfied = (cumhours >= self.minhours)
       self.hours_rem  = 0 if self.satisfied else (self.minhours - cumhours)
-
 
     # truncate unless greedy == True
     if self.greedy == False:
@@ -434,9 +435,8 @@ class Requirement:
             break
         self.satcourses = templist
 
-
-    # re-sort the used courses by term
-    self.satcourses.sort(key=lambda course: course.term)
+    # one more re-sort
+    self.satcourses.sort(key = lambda course: (course.term, course.code))
 
     return 
 
@@ -786,10 +786,13 @@ def terminal_report(student, courselist, degree):
           report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
       if (req.mincourses > 0):
-        for kk in range(req.mincourses):
+        for kk,cc in enumerate(req.satcourses):
           counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
-          cc = nullcourse if len(req.satcourses) <= kk else req.satcourses[kk]
           report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+        blanklns = req.mincourses - len(req.satcourses)
+        cc = nullcourse
+        for kk in range(blanklns):
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
     # now loop through verifications
     for ver in grp.verlist:
