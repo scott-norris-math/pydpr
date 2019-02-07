@@ -204,7 +204,7 @@ def load_courses_from_query(queryfile, studentID):
     course = Course()
     course.term    = row[4].value
     course.dept    = row[5].value
-    course.number  = row[6].value
+    course.number  = row[6].value.strip()
     course.code    = course.dept + ' ' + str(course.number)
     course.name    = row[8].value
     course.grade   = row[9].value
