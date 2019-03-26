@@ -48,7 +48,7 @@ BIOL = set( ['BIOL 1301', 'BIOL 1302', 'BIOL 1101', 'BIOL 1102', 'BIOL 1401', 'B
 GEOL = set( ['GEOL 1301', 'GEOL 1305', 'GEOL 1307', 'GEOL 1313', 'GEOL 1315', 'GEOL 3340'] ) 
 SCI  = PHYS|CHEM|BIOL|GEOL
 
-ENG1 = set(['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'CSE 7365'])
+ENG1 = set(['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'MATH 6324', 'CSE 7365'])
 
 MEG2 = set(['ME 4322', 'ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'])
 EEG2 = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 3322', 'EE 3330', 'EE 3372'])
@@ -142,19 +142,19 @@ def create_degree(degcode, speccode):
 
   if speccode == 'ENG-ME':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ENG1, 2)
+    spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
     spec.add_requirement("Two ME", MEG2, 2, greedy=True)
     ENG4P = MEG2
     
   if speccode == 'ENG-CEE':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ENG1, 2)
+    spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
     spec.add_requirement("Two CEE", CEG2, 2, greedy=True)
     ENG4P = CEG2
 
   if speccode == 'ENG-EE':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ENG1, 2)
+    spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
     spec.add_requirement("Two EE", EEG2, 2, greedy=True)
     ENG4P = EEG2
 

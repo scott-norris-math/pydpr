@@ -748,16 +748,23 @@ def terminal_report(student, courselist, degree):
     dstatus = Fore.RED+"Inomplete."+Style.RESET_ALL
 
   # student and degree information
-  report  = "\n\n"
+  report  = ""
   report += student.lname + ", " + student.fname + "\n"
   report += "-"*25 + "\n"
-  report += "SMU ID:      " + str(student.ID) + "\n"
-  report += "Email:       " + str(student.email) + "\n"
-  report += "Admitted:    " + termcode_to_text(student.aterm) + "\n"
-  report += "Graduates:   " + termcode_to_text(student.gterm) + "\n"
-  report += "Degree:      " + str(degree.name) + "\n"
-  report += "Status:      " + dstatus + "\n"
-  report += "\n"
+  report += "SMU ID:       " + str(student.ID) + "\n"
+  report += "Email:        " + str(student.email) + "\n"
+  report += "Admitted:     " + termcode_to_text(student.aterm) + "\n"
+  report += "Graduates:    " + termcode_to_text(student.gterm) + "\n"
+  report += "GradStatus:   " + student.gstatus + "\n"
+  report += "Degree:       " + str(degree.name) + "\n"
+  report += "Deg. Status:  " + dstatus + "\n"
+  report += "\n\n"
+
+  # what to print for missing courses
+  nullcourse = Course()
+  nullcourse.term = '(none)'
+  nullcourse.code = '(none)'
+  nullcourse.grade = '-'
 
   # loop through the groups
   for grp in degree.grplist:
@@ -768,10 +775,6 @@ def terminal_report(student, courselist, degree):
 
     # now loop through the requirements
     for req in grp.reqlist:
-      nullcourse = Course()
-      nullcourse.term = '(none)'
-      nullcourse.code = '(none)'
-      nullcourse.grade = '-'
       counter = 0
 
       if (req.minhours > 0):
@@ -840,100 +843,119 @@ def terminal_report(student, courselist, degree):
 
 
 def pdf_report(student, courselist, degree, pdfname):
-    '''
-    pdf_report()
-    -----------------
-    This saves a textual report of the student's progress to the file $ID.pdf.
-    '''
+  '''
+  pdf_report()
+  -----------------
+  This saves a textual report of the student's progress to the file $ID.pdf.
+  '''
 
-    if degree.complete:
-      dstatus = "Complete!"
-    else:
-      dstatus = "Inomplete."
+  if degree.complete:
+    dstatus = "Complete!"
+  else:
+    dstatus = "Inomplete."
 
-    # student and degree information
-    report  = ""
-    report += student.lname + ", " + student.fname + "\n"
-    report += "-"*25 + "\n"
-    report += "SMU ID:      " + str(student.ID) + "\n"
-    report += "Email:       " + str(student.email) + "\n"
-    report += "Admitted:    " + termcode_to_text(student.aterm) + "\n"
-    report += "Graduates:   " + termcode_to_text(student.gterm) + "\n"
-    report += "Degree:      " + str(degree.name) + "\n"
-    report += "Status:      " + dstatus + "\n"
-    report += "\n\n"
+  # student and degree information
+  report  = ""
+  report += student.lname + ", " + student.fname + "\n"
+  report += "-"*25 + "\n"
+  report += "SMU ID:       " + str(student.ID) + "\n"
+  report += "Email:        " + str(student.email) + "\n"
+  report += "Admitted:     " + termcode_to_text(student.aterm) + "\n"
+  report += "Graduates:    " + termcode_to_text(student.gterm) + "\n"
+  report += "GradStatus:   " + student.gstatus + "\n"
+  report += "Degree:       " + str(degree.name) + "\n"
+  report += "Deg. Status:  " + dstatus + "\n"
+  report += "\n\n"
 
-    # loop through the groups
-    for grp in degree.grplist:
+  # loop through the groups
+  for grp in degree.grplist:
 
-      grpstatus = 'SATISFIED' if grp.satisfied else 'NOT SATISFIED'
-      report += "{0:24}: {1:16}".format(grp.name, grpstatus) + '\n'
-      report += '-'*64 + '\n'
+    grpstatus = 'SATISFIED' if grp.satisfied else 'NOT SATISFIED'
+    report += "{0:24}: {1:16}".format(grp.name, grpstatus) + '\n'
+    report += '-'*64 + '\n'
 
-      # now loop through the requirements
-      for req in grp.reqlist:
+    # what to print for missing courses
+    nullcourse = Course()
+    nullcourse.term = '________________'
+    nullcourse.code = '________________'
+    nullcourse.grade = '____'
+    nc = nullcourse
 
-        nullcourse = Course()
-        nullcourse.term = '________________'
-        nullcourse.code = '________________'
-        nullcourse.grade = '____'
-        nc = nullcourse
+    # now loop through the requirements
+    for req in grp.reqlist:
+      counter = 0
 
-        if (req.minhours > 0):
-          sathours = sum([cc.credits for cc in req.satcourses])
-          remhours = max(0, req.minhours - sathours)
-          for kk,cc in enumerate(req.satcourses):
-            counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk+1)
-            report += '\n'
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
-          blanklns = int(np.ceil(remhours / 3.0))
-          cc = nullcourse if len(req.satcourses) < kk else req.satcourses[kk-1]
-          for kk in range(blanklns):
-            report += '\n'
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, nc.code, termcode_to_text(nc.term), nc.grade) + '\n'
+      if (req.minhours > 0):
+        sathours = sum([cc.credits for cc in req.satcourses])
+        remhours = max(0, req.minhours - sathours)
+        for kk,cc in enumerate(req.satcourses):
+          counter = '' if (len(req.satcourses)==1 and remhours==0) else ' ' + str(kk+1)
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+        blanklns = int(np.ceil(remhours / 3.0))
+        cc = nullcourse
+        for kk in range(blanklns):
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
-        if (req.mincourses > 0):
-          for kk in range(req.mincourses):
-            counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
-            cc = nullcourse if len(req.satcourses) <= kk else req.satcourses[kk]
-            report += '\n'
-            report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+      if (req.mincourses > 0):
+        for kk,cc in enumerate(req.satcourses):
+          counter = '' if req.mincourses == 1 else ' ' + str(kk+1)
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name+counter, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
+        blanklns = req.mincourses - len(req.satcourses)
+        cc = nullcourse
+        for kk in range(blanklns):
+          report += "{0:24} {1:16} {2:16} {3:4}".format(req.name, cc.code, termcode_to_text(cc.term), cc.grade) + '\n'
 
-      # now loop through verifications
-      for ver in grp.verlist:
-        reqstatus = 'SATISFIED' if ver.satisfied else 'NOT SATISFIED'
-        report += '{0:24} {1}'.format(ver.name, reqstatus) + '\n'
-      report += '\n\n'
+    # now loop through verifications
+    for ver in grp.verlist:
+      reqstatus = 'SATISFIED' if ver.satisfied else 'NOT SATISFIED'
+      report += '{0:24} {1}'.format(ver.name, reqstatus) + '\n'
+    report += '\n\n'
 
-    report += '\n'
+  report += '\n'
 
-    # General Warnings
-    if len(degree.warnings_general) > 0:
-      #report += 'General Warnings\n'
-      #report += '--------------------\n'
-      for warning in degree.warnings_general:
-        report += "Warning:  " + warning + '.\n'
+  # General Warnings
+  if len(degree.warnings_general) > 0:
+    #report += 'General Warnings\n'
+    #report += '--------------------\n'
+    for w in degree.warnings_general:
+      if w.level == 1:
+        prefix = "Caution:  "
+      if w.level == 2:
+        prefix = "Concern:  "
+      if w.level == 3:
+        prefix = "Warning:  "
+      if w.level == 4:
+        prefix = "PROBLEM:  "
+      report += prefix + w.message + ".\n"
 
-    # Degree-Specific Warnings
-    if len(degree.warnings_major) > 0:
-      #report += 'Degree Plan Warnings\n'
-      #report += '--------------------\n'
-      for warning in degree.warnings_major:
-        report += "Warning:  " + warning + '.\n'
 
+  # Degree-Specific Warnings
+  if len(degree.warnings_major) > 0:
+    #report += 'Degree Plan Warnings\n'
+    #report += '--------------------\n'
+    for w in degree.warnings_major:
+      if w.level == 1:
+        prefix = "Caution:  "
+      if w.level == 2:
+        prefix = "Concern:  "
+      if w.level == 3:
+        prefix = "Warning:  "
+      if w.level == 4:
+        prefix = "PROBLEM:  "
+      report += prefix + w.message + ".\n"
 
-    # write to textfile
-    sp = 'temp-report-%s' % (student.ID)
-    outfile = open('%s.txt' % (sp), 'w')
-    outfile.write(report)
-    outfile.close()
+  # write to textfile
+  sp = 'temp-report-%s' % (student.ID)
+  outfile = open('%s.txt' % (sp), 'w')
+  outfile.write(report)
+  outfile.close()
 
-    # convert to pdf and clean up
-    call('enscript -p %s.ps --margins=72:72:72:72 --no-header %s.txt'%(sp, sp), shell=True)
-    call('ps2pdf %s.ps %s'%(sp, pdfname), shell=True)
-    call('rm %s.txt %s.ps'%(sp, sp), shell=True)
+  # convert to pdf and clean up
+  call('enscript -p %s.ps --margins=72:72:72:72 --no-header %s.txt'%(sp, sp), shell=True)
+  call('ps2pdf %s.ps %s'%(sp, pdfname), shell=True)
+  call('rm %s.txt %s.ps'%(sp, sp), shell=True)
 
-    return 
+  return 
 
 
 
