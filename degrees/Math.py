@@ -39,8 +39,8 @@ ADV  = PURE|APPL|COMP
 APNU = APPL|COMP
 
 
-CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CSE 2341', 'CSE 3353', 'CEE 3310'] )
-STAT = set( ['STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
+CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CSE 2341', 'CSE 3353', 'CEE 3310', 'ME 3310'] )
+STAT = set( ['STAT 3300', 'STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
 
 PHYS = set( ['PHYS 1303', 'PHYS 1304', 'PHYS 1105', 'PHYS 1106', 'PHYS 1403', 'PHYS 1404',] )
 CHEM = set( ['CHEM 1303', 'CHEM 1304', 'CHEM 1113', 'CHEM 1114'] )
@@ -53,6 +53,7 @@ ENG1 = set(['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MA
 MEG2 = set(['ME 4322', 'ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'])
 EEG2 = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 3322', 'EE 3330', 'EE 3372'])
 CEG2 = set(['ME 4322', 'ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'CEE 7361', 'CEE 7364', 'ME 4322', 'ME 5322', 'ME 7322'])
+ENG2 = MEG2|EEG2|CEG2
 ORG2 = set(['EMIS 3360', 'EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
 CSG2 = set(['CSE 4381'])
 
@@ -73,7 +74,7 @@ def create_degree(degcode, speccode):
   if speccode in ['CSE', 'OR']:
     degree.add_major_warning_check(comp_missing_1341)
     degree.add_major_warning_check(comp_missing_3315)
-  if speccode in ['ANU', 'ENG-ME', 'ENG-EE', 'ENG-CEE']:
+  if speccode in ['ANU', 'ENG']:
     degree.add_major_warning_check(anum_missing_1341)
 
 
@@ -113,8 +114,8 @@ def create_degree(degcode, speccode):
 
   # check for BA/BS and specialization
   specstring = speccode
-  if speccode in [None, 'UNS', 'ENG']:
-    specstring = 'UNKNOWN -- SEE ME ASAP.'
+  if speccode in [None, 'UNS']:
+    specstring = 'UNKNOWN -- SEE ME ASAP (using ANU).'
     speccode = 'ANU'
 
   if degcode == 'BA':
@@ -140,24 +141,12 @@ def create_degree(degcode, speccode):
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("App/Num. Math", APNU, 3)
 
-  if speccode == 'ENG-ME':
+  if speccode == 'ENG':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
-    spec.add_requirement("Two ME", MEG2, 2, greedy=True)
-    ENG4P = MEG2
+    spec.add_requirement("Two Adv. Eng.", ENG2, 2, greedy=True)
+    ENG4P = ENG2
     
-  if speccode == 'ENG-CEE':
-    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
-    spec.add_requirement("Two CEE", CEG2, 2, greedy=True)
-    ENG4P = CEG2
-
-  if speccode == 'ENG-EE':
-    spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
-    spec.add_requirement("Two EE", EEG2, 2, greedy=True)
-    ENG4P = EEG2
-
   if speccode == 'CSE':
     spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Two Math 4000+",  APNU, 2) 
@@ -192,20 +181,6 @@ def create_degree(degcode, speccode):
 # ---------------------------------------------------------
 #    Degree-specific pre- and post-check routines
 # ---------------------------------------------------------
-
-
-def detect_eng_specialization(student, courselist):
-
-  if student.speccode == 'ENG':
-    depts = [a.dept for a in courselist if a.dept in ['ME', 'EE', 'CEE']]
-    if len(depts) == 0: return
-
-    maxdep = max(set(depts), key=depts.count)
-    if maxdep == 'ME':  student.speccode = 'ENG-ME'
-    if maxdep == 'EE':  student.speccode = 'ENG-EE'
-    if maxdep == 'CEE':  student.speccode = 'ENG-CEE'
-
-
 
 def incomplete_foundation(student, coursehistory, degree):
 

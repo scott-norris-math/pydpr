@@ -38,12 +38,17 @@ GPAlookup['F']  = 0.0
 GPAlookup['W'] = 0.0
 GPAlookup['I'] = 0.0
 GPAlookup['P'] = 0.0
+GPAlookup['S'] = 0.0
+GPAlookup['NC'] = 0.0
 
 GPAlookup['ED+'] = 1.3
 GPAlookup['ED'] = 1.0
 GPAlookup['ED-'] = 0.7
 GPAlookup['EF'] = 0.0
+
+GPAlookup['TD+'] = 1.3
 GPAlookup['TD'] = 1.0
+GPAlookup['TD-'] = 0.7
 GPAlookup['TF'] = 0.0
 
 GPAgrades = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
@@ -283,6 +288,24 @@ def unplanned_terms(student, coursehistory):
   last_planned = int(max([c.term for c in coursehistory]))
   unplanned = (gradterm - last_planned) / 5
   return unplanned
+
+
+
+def outside_interests(student, coursehistory, cutoff=6):
+
+  from collections import Counter
+
+  cox_set = set(['ACCT', 'FINA', 'ITOM', 'MKTG', 'BL', 'BLI'])
+
+  student_department = student.degree.split('-')[0]
+  dept_list = [a.dept for a in coursehistory if (a.dept != student_department and GPAlookup[a.grade] > 1.5)]
+  dept_list = ['COX' if a in cox_set else a for a in dept_list]    
+
+  dept_dict = Counter(dept_list)
+  count_list = [(a, dept_dict[a]) for a in dept_dict]
+  sorted_counts = sorted(count_list, key = lambda a: a[1], reverse=True)
+  final_list = [a for a in sorted_counts if a[1] >= cutoff]
+  return final_list
 
 
 
@@ -745,19 +768,28 @@ def terminal_report(student, courselist, degree):
   if degree.complete:
     dstatus = Fore.GREEN+"Complete!"+Style.RESET_ALL
   else:
-    dstatus = Fore.RED+"Inomplete."+Style.RESET_ALL
+    dstatus = Fore.RED+"Incomplete."+Style.RESET_ALL
+
+
+  ois = outside_interests(student, courselist)
+  oistring = ""
+  for oi in ois:
+    oistring += "%s(%d), " % (oi[0], oi[1])
+  oistring = oistring[:-2]
 
   # student and degree information
   report  = ""
   report += student.lname + ", " + student.fname + "\n"
   report += "-"*25 + "\n"
-  report += "SMU ID:       " + str(student.ID) + "\n"
-  report += "Email:        " + str(student.email) + "\n"
-  report += "Admitted:     " + termcode_to_text(student.aterm) + "\n"
-  report += "Graduates:    " + termcode_to_text(student.gterm) + "\n"
-  report += "GradStatus:   " + student.gstatus + "\n"
-  report += "Degree:       " + str(degree.name) + "\n"
-  report += "Deg. Status:  " + dstatus + "\n"
+  report += "SMU ID:           " + str(student.ID) + "\n"
+  report += "Email:            " + str(student.email) + "\n"
+  report += "Admitted:         " + termcode_to_text(student.aterm) + "\n"
+  report += "Graduates:        " + termcode_to_text(student.gterm) + "\n"
+  report += "GradStatus:       " + str(student.gstatus) + "\n"
+  report += "\n"
+  report += "Degree Type:      " + str(degree.name) + "\n"
+  report += "Degree Status:    " + dstatus + "\n"
+  report += "Other Interests:  " + oistring + "\n"
   report += "\n\n"
 
   # what to print for missing courses
@@ -852,19 +884,26 @@ def pdf_report(student, courselist, degree, pdfname):
   if degree.complete:
     dstatus = "Complete!"
   else:
-    dstatus = "Inomplete."
+    dstatus = "Incomplete."
+
+  ois = outside_interests(student, courselist)
+  oistring = ""
+  for oi in ois:
+    oistring += "%s(%d), " % (oi[0], oi[1])
+  oistring = oistring[:-2]
 
   # student and degree information
   report  = ""
   report += student.lname + ", " + student.fname + "\n"
   report += "-"*25 + "\n"
-  report += "SMU ID:       " + str(student.ID) + "\n"
-  report += "Email:        " + str(student.email) + "\n"
-  report += "Admitted:     " + termcode_to_text(student.aterm) + "\n"
-  report += "Graduates:    " + termcode_to_text(student.gterm) + "\n"
-  report += "GradStatus:   " + student.gstatus + "\n"
-  report += "Degree:       " + str(degree.name) + "\n"
-  report += "Deg. Status:  " + dstatus + "\n"
+  report += "SMU ID:           " + str(student.ID) + "\n"
+  report += "Email:            " + str(student.email) + "\n"
+  report += "Admitted:         " + termcode_to_text(student.aterm) + "\n"
+  report += "Graduates:        " + termcode_to_text(student.gterm) + "\n"
+  report += "GradStatus:       " + str(student.gstatus) + "\n"
+  report += "Degree Type:      " + str(degree.name) + "\n"
+  report += "Degree Status:    " + dstatus + "\n"
+  report += "Other Interests:  " + oistring + "\n"
   report += "\n\n"
 
   # loop through the groups
