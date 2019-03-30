@@ -35,23 +35,32 @@ GPAlookup['D']  = 1.0
 GPAlookup['D-'] = 0.7
 GPAlookup['F']  = 0.0
 
+# courses that do not factor into GPA
 GPAlookup['W'] = 0.0
 GPAlookup['I'] = 0.0
 GPAlookup['P'] = 0.0
 GPAlookup['S'] = 0.0
 GPAlookup['NC'] = 0.0
 
+# excluded courses for which no credit was awarded
 GPAlookup['ED+'] = 1.3
 GPAlookup['ED'] = 1.0
 GPAlookup['ED-'] = 0.7
 GPAlookup['EF'] = 0.0
 
+# transfer courses for which no credit was awarded
 GPAlookup['TD+'] = 1.3
 GPAlookup['TD'] = 1.0
 GPAlookup['TD-'] = 0.7
 GPAlookup['TF'] = 0.0
 
-GPAgrades = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
+
+GPAgrades  = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
+catt_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F', 'P', 'S'])
+cawd_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'P', 'S'])
+gpts_grades = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
+
+
 
 
 def get_gradepoints(grade):
@@ -212,10 +221,11 @@ def load_courses_from_query(queryfile, studentID):
     course.number  = row[6].value.strip()
     course.code    = course.dept + ' ' + str(course.number)
     course.name    = row[8].value
+
     course.grade   = row[9].value
     course.credits = row[10].value
-    course.credit_awarded = row[11].value
-    #course.status  = row[].value
+    course.awarded = row[11].value
+    course.type    = row[12].value
 
     if course.credits == 0:
       continue
@@ -361,14 +371,25 @@ class Course:
 
   def __init__(self, code=None, name=None, term=None, grade=None, credits=0, status=None):
 
-    self.dept  = None
-    self.number = None
-    self.code = code
-    self.name = name
-    self.term = term
-    self.grade = grade
+    self.dept    = None
+    self.number  = None
+    self.code    = code
+    self.name    = name
+    self.term    = term
+
+    self.grade   = grade
     self.credits = credits
-    self.status = status
+    self.awarded = None
+    self.type    = None
+
+
+  def credit_status(self):
+
+    # credits attempted
+    credits_attempted = self.credits if (self.grade in catt_grades) else 0.0
+    credits_awarded   = self.credits if (self.grade in cawd_grades) else 0.0
+    gpoints_awarded   = self.credits * GPAlookup[self.grade] if (self.grade in gpts_grades) else 0.0
+    return (credits_attempted, credits_awarded, gpoints_awarded)
 
 
 
