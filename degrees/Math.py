@@ -32,15 +32,15 @@ CORE = set( ['MATH 3302', 'MATH 2339', 'MATH 3304', 'MATH 3353', 'MATH 3313', 'M
 IPRF = set( ['MATH 3308', 'MATH 3311'] )
 ISCP = set( ['MATH 3315', 'CSE 3365', 'MATH 3316'] )
 
-PURE = set( ['MATH 3337', 'MATH 4338', 'MATH 4351', 'MATH 4355', 'MATH 4381', 'MATH 5331', 'MATH 5353', 'MATH 6337'])
-APPL = set( ['MATH 3334', 'MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4335', 'MATH 5331', 'MATH 5334', 'MATH 5353', 'MATH 6324', 'MATH 6311', 'MATH 6333'])
-COMP = set( ['MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 6315', 'MATH 6316', 'CSE 7365'])
+PURE = set( ['MATH 3337', 'MATH 4338', 'MATH 4339', 'MATH 4351', 'MATH 4355', 'MATH 4381', 'MATH 5331', 'MATH 5353', 'MATH 6337'])
+APPL = set( ['MATH 4325', 'MATH 4334', 'MATH 4335', 'MATH 4337', 'MATH 4339', 'MATH 3334', 'MATH 3337', 'MATH 5331', 'MATH 5334', 'MATH 5353', 'MATH 6324', 'MATH 6311', 'MATH 6333'])
+COMP = set( ['MATH 4315', 'MATH 4316', 'MATH 4317', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 6315', 'MATH 6316', 'CSE 7365'])
 ADV  = PURE|APPL|COMP
 APNU = APPL|COMP
 
 
 CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CSE 2341', 'CSE 3353', 'CEE 3310', 'ME 3310'] )
-STAT = set( ['STAT 3300', 'STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
+STAT = set( ['STAT 3300', 'STAT 3304', 'STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
 
 PHYS = set( ['PHYS 1303', 'PHYS 1304', 'PHYS 1105', 'PHYS 1106', 'PHYS 1403', 'PHYS 1404',] )
 CHEM = set( ['CHEM 1303', 'CHEM 1304', 'CHEM 1113', 'CHEM 1114'] )
@@ -143,13 +143,13 @@ def create_degree(degcode, speccode):
 
   if speccode == 'ENG':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", ENG1, 2, greedy=True)
+    spec.add_requirement("Two Math 4000+", APNU, 2, greedy=True)
     spec.add_requirement("Two Adv. Eng.", ENG2, 2, greedy=True)
     ENG4P = ENG2
     
   if speccode == 'CSE':
     spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+",  APNU, 2) 
+    spec.add_requirement("Adv. Sci. Comp.",  COMP, 2) 
     spec.add_requirement("CSE 4381", CSG2, 1)
     ENG4P = CSG2
 
