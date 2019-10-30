@@ -1,8 +1,6 @@
 '''
 TODO:  
 
-Fall of Junior year (4 sem remaining), and not taking CSE 1341.
-
 Eventually we want a global routine provided by pydpr, 
 that allows the user to select which degree we want to create.
 This routine should accept 'degreecode' and 'speccode' and then
@@ -23,14 +21,14 @@ import numpy as np
 import pydpr.pydpr as dpr
 
 
-spectext = dict({'PM':'Pure', 'ANU':'Applied/Numerical', 'CSE':'Computer Science', 'OR':'Operations Research', 'ENG-EE':'Elec. Eng.', 'ENG-ME':'Mech. Eng.', '':'NONE DECLARED!!!'})
+spectext = dict({'PM':'Pure', 'ANU':'Applied/Numerical', 'CS':'Computer Science', 'OR':'Operations Research', 'ENG-ME':'Mech. Eng.', 'ENG-EE':'Elec. Eng.', 'ENG-CEE':'Civ./Env. Eng.',  '':'NONE DECLARED!!!'})
 
 CAL1 = set( ['MATH 1337', 'MATH 1309'] )
 CAL2 = set( ['MATH 1338', 'MATH 1340'] )
 CORE = set( ['MATH 3302', 'MATH 2339', 'MATH 3304', 'MATH 3353', 'MATH 3313', 'MATH 2343'] )
 
 IPRF = set( ['MATH 3308', 'MATH 3311'] )
-ISCP = set( ['MATH 3315', 'CSE 3365', 'MATH 3316'] )
+ISCP = set( ['MATH 3315', 'CSE 3365', 'MATH 3316', 'CS 3365'] )
 
 PURE = set( ['MATH 3337', 'MATH 4338', 'MATH 4339', 'MATH 4351', 'MATH 4355', 'MATH 4381', 'MATH 5331', 'MATH 5353', 'MATH 6337'])
 APPL = set( ['EMIS 3360', 'MATH 4325', 'MATH 4334', 'MATH 4335', 'MATH 4337', 'MATH 4339', 'MATH 3334', 'MATH 3337', 'MATH 5331', 'MATH 5334', 'MATH 5353', 'MATH 6324', 'MATH 6311', 'MATH 6333', 'MATH 6336', 'ME 7336'])
@@ -39,8 +37,8 @@ ADV  = PURE|APPL|COMP
 APNU = APPL|COMP
 
 
-CSE  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CSE 2341', 'CSE 3353', 'CEE 3310', 'ME 3310'] )
-STAT = set( ['STAT 3300', 'STAT 3304', 'STAT 4340', 'CSE 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
+CS  = set( ['ASIM 1310', 'CRCP 1310', 'CSE 1341', 'CSE 1342', 'CSE 2341', 'CSE 3353', 'CEE 3310', 'ME 3310', 'CS 1340', 'CS 1341', 'CS 1342', 'CS 2341', 'CS 3353'] )
+STAT = set( ['STAT 3300', 'STAT 3304', 'STAT 4340', 'CSE 4340', 'CS 4340', 'EMIS 3340', 'STAT 5340', 'EE 3360', 'STAT 4341', 'EMIS 7370', 'ECO 5350'] )
 
 PHYS = set( ['PHYS 1303', 'PHYS 1304', 'PHYS 1105', 'PHYS 1106', 'PHYS 1403', 'PHYS 1404',] )
 CHEM = set( ['CHEM 1303', 'CHEM 1304', 'CHEM 1113', 'CHEM 1114'] )
@@ -48,14 +46,14 @@ BIOL = set( ['BIOL 1301', 'BIOL 1302', 'BIOL 1101', 'BIOL 1102', 'BIOL 1401', 'B
 GEOL = set( ['GEOL 1301', 'GEOL 1305', 'GEOL 1307', 'GEOL 1313', 'GEOL 1315', 'GEOL 3340'] ) 
 SCI  = PHYS|CHEM|BIOL|GEOL
 
-ENG1 = set(['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'MATH 6324', 'CSE 7365'])
+ENG1 = set(['MATH 3337', 'MATH 4337', 'MATH 4325', 'MATH 4315', 'MATH 4370', 'MATH 5315', 'MATH 5316', 'MATH 5331', 'MATH 5334', 'MATH 6315', 'MATH 6316', 'MATH 6324', 'CSE 7365', 'CS 7365'])
 
 MEG2 = set(['ME 4322', 'ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'ME 5361', 'ME 5386', 'ME 7302', 'ME 7322',  'ME 7361'])
 EEG2 = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 3322', 'EE 3330', 'EE 3372'])
 CEG2 = set(['ME 4322', 'ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'CEE 7361', 'CEE 7364', 'ME 4322', 'ME 5322', 'ME 7322'])
 ENG2 = MEG2|EEG2|CEG2
 ORG2 = set(['EMIS 3360', 'EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
-CSG2 = set(['CSE 4381'])
+CSG2 = set(['CSE 4381', 'CS 4381'])
 
 
 
@@ -109,7 +107,7 @@ def create_degree(degcode, speccode):
   # Supplemental Courses
   supp = dpr.Group("Supplemental Courses")
   supp.add_requirement("Sci/Eng Statistics", STAT, 1, greedy=True)
-  supp.add_requirement("Intro. Programming", CSE, minhours=3, greedy=True)
+  supp.add_requirement("Intro. Programming", CS, minhours=3, greedy=True)
 
 
   # check for BA/BS and specialization
@@ -150,7 +148,7 @@ def create_degree(degcode, speccode):
   if speccode == 'CSE':
     spec.add_requirement("Int. Sci. Comp.", ISCP, 1) 
     spec.add_requirement("Adv. Sci. Comp.",  COMP, 2) 
-    spec.add_requirement("CSE 4381", CSG2, 1)
+    spec.add_requirement("CS 4381", CSG2, 1)
     ENG4P = CSG2
 
   if speccode == 'OR':
@@ -165,7 +163,7 @@ def create_degree(degcode, speccode):
 
 
   # one advanced elective
-  if speccode in set(['PM', 'ANU', 'CSE', 'OR']):
+  if speccode in set(['PM', 'ANU', 'CS', 'OR']):
     elec = dpr.Group("Additional Elective(s)")
     elec.add_requirement("Extra Math 3000+", IPRF|ISCP|ADV, mincourses=1, greedy=True)
     degree.add_group(elec)
@@ -226,17 +224,17 @@ def comp_missing_1341(student, coursehistory, degree):
   # get necessary information
   ccodes = [c.code for c in coursehistory]
   uterms = dpr.unplanned_terms(student, coursehistory)
-  unready = ('CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP' not in ccodes)
+  unready = ('CS 1340' not in ccodes and 'CS 1341' not in ccodes and 'CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP 1310' not in ccodes)
 
   # return appropriate warning
   if uterms <= 2 and unready:
-    return dpr.DPRWarning(4, "missing CSE 1341: CSE/EMIS specializaion impossible.")
+    return dpr.DPRWarning(4, "missing CS 1340/1341: CS/EMIS specializaion impossible.")
   if uterms <= 3 and unready:
-    return dpr.DPRWarning(3, "missing CSE 1341: CSE/EMIS specializaion becoming unlikely.")
+    return dpr.DPRWarning(3, "missing CS 1340/1341: CS/EMIS specializaion becoming unlikely.")
   if uterms <= 4 and unready:
-    return dpr.DPRWarning(2, "you should change your schedule to be enrolled in CSE 1341.")
+    return dpr.DPRWarning(2, "you should change your schedule to be enrolled in CS 1340/1341.")
   if uterms <= 5 and unready:
-    return dpr.DPRWarning(1, "it is best to take CSE 1341 by the beginning of Sophomore year.")
+    return dpr.DPRWarning(1, "it is best to take CS 1340/1341 by the beginning of Sophomore year.")
 
   return None
 
@@ -247,17 +245,17 @@ def anum_missing_1341(student, coursehistory, degree):
   # get necessary information
   ccodes = [c.code for c in coursehistory]
   uterms = dpr.unplanned_terms(student, coursehistory)
-  unready = ('CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP' not in ccodes)
+  unready = ('CS 1341' not in ccodes and 'CSE 1341' not in ccodes and 'ASIM 1310' not in ccodes and 'CRCP 1310' not in ccodes)
 
   # return appropriate warning
   if uterms <= 1 and unready:
-    return dpr.DPRWarning(4, "missing CSE 1341: on-time graduation impossible.")
+    return dpr.DPRWarning(4, "missing CS 1340/1341: on-time graduation impossible.")
   if uterms <= 2 and unready:
-    return dpr.DPRWarning(3, "missing CSE 1341: on-time graduation becoming unlikely.")
+    return dpr.DPRWarning(3, "missing CS 1340/1341: on-time graduation becoming unlikely.")
   if uterms <= 3 and unready:
-    return dpr.DPRWarning(2, "you should change your schedule to be enrolled in CSE 1341.")
+    return dpr.DPRWarning(2, "you should change your schedule to be enrolled in CS 1340/1341.")
   if uterms <= 4 and unready:
-    return dpr.DPRWarning(1, "it is best to take CSE 1341 by the end of Sophomore year.")
+    return dpr.DPRWarning(1, "it is best to take CS 1340/1341 by the end of Sophomore year.")
 
   return None
 
@@ -267,13 +265,13 @@ def comp_missing_3315(student, coursehistory, degree):
   # get necessary information
   ccodes = [c.code for c in coursehistory]
   uterms = dpr.unplanned_terms(student, coursehistory)
-  unready = ('MATH 3315' not in ccodes and 'MATH 3316' not in ccodes and 'CSE 3365' not in ccodes)
+  unready = ('MATH 3315' not in ccodes and 'MATH 3316' not in ccodes and 'CSE 3365' not in ccodes and 'CS 3365' not in ccodes)
 
   # return appropriate warning
   if uterms <= 1 and unready:
-    return dpr.DPRWarning(4, "missing MATH 3315: CSE/EMIS specializaion no longer possible.")
+    return dpr.DPRWarning(4, "missing MATH 3315: CS/EMIS specializaion no longer possible.")
   if uterms <= 2 and unready:
-    return dpr.DPRWarning(3, "missing MATH 3315: CSE/EMIS specializaion becoming unlikely.")
+    return dpr.DPRWarning(3, "missing MATH 3315: CS/EMIS specializaion becoming unlikely.")
   if uterms <= 3 and unready:
     return dpr.DPRWarning(2, "you need to change your schedule to be enrolled in MATH 3315.")
   if uterms <= 4 and unready:
