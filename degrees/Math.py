@@ -52,7 +52,7 @@ MEG2 = set(['ME 4322', 'ME 4360', 'ME 5302', 'ME 5320', 'ME 5322', 'ME 5336', 'M
 EEG2 = set(['EE 5330', 'EE 5332', 'EE 5336', 'EE 5360', 'EE 5362', 'EE 5372', 'EE 7330', 'EE 7336', 'EE 7360', 'EE 3322', 'EE 3330', 'EE 3372'])
 CEG2 = set(['ME 4322', 'ME 5336', 'MATH 6336', 'CEE 5331', 'CEE 5332', 'CEE 5334', 'CEE 7331', 'CEE 7332', 'CEE 5361', 'CEE 5364', 'CEE 7361', 'CEE 7364', 'ME 4322', 'ME 5322', 'ME 7322'])
 ENG2 = MEG2|EEG2|CEG2
-ORG2 = set(['EMIS 3360', 'EMIS 5361', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
+ORG2 = set(['EMIS 3360', 'EMIS 5361', 'EMIS 3362', 'EMIS 5362', 'EMIS 5369', 'STAT 5344', 'EMIS 5364', 'EMIS 7362'])
 CSG2 = set(['CSE 4381', 'CS 4381'])
 
 
@@ -163,7 +163,7 @@ def create_degree(degcode, speccode):
 
 
   # one advanced elective
-  if speccode in set(['PM', 'ANU', 'CS', 'OR']):
+  if speccode in set(['PM', 'ANU', 'CSE', 'OR']):
     elec = dpr.Group("Additional Elective(s)")
     elec.add_requirement("Extra Math 3000+", IPRF|ISCP|ADV, mincourses=1, greedy=True)
     degree.add_group(elec)
