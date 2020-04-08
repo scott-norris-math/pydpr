@@ -107,7 +107,7 @@ def create_degree(degcode, speccode):
   # Supplemental Courses
   supp = dpr.Group("Supplemental Courses")
   supp.add_requirement("Sci/Eng Statistics", STAT, 1, greedy=True)
-  supp.add_requirement("Intro. Programming", CS, minhours=3, greedy=True)
+  supp.add_requirement("Intro. Programming", CS, 1, greedy=True)
 
 
   # check for BA/BS and specialization
@@ -133,7 +133,7 @@ def create_degree(degcode, speccode):
 
   if speccode == 'PM':
     spec.add_requirement("Intro. Proof", IPRF, 1)
-    spec.add_requirement("Pure Math", PURE, minhours=9)
+    spec.add_requirement("Pure Math", PURE, mincourses=3)
 
   if speccode == 'ANU' or speccode == None or speccode == 'UNS':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
