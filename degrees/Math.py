@@ -141,7 +141,7 @@ def create_degree(degcode, speccode):
 
   if speccode == 'ENG':
     spec.add_requirement("Intro. Sci. Comp.", ISCP, 1) 
-    spec.add_requirement("Two Math 4000+", APNU, 2, greedy=True)
+    spec.add_requirement("One Math 4000+", APNU, 1)
     spec.add_requirement("Two Adv. Eng.", ENG2, 2, greedy=True)
     ENG4P = ENG2
     
@@ -161,14 +161,10 @@ def create_degree(degcode, speccode):
   spec.add_verification( "ver: Two 4000+ (any)", ADV|ENG4P, 2)
   degree.add_group(spec)
 
+  elec = dpr.Group("Additional Elective(s)")
+  elec.add_requirement("Extra Math 3000+", IPRF|ISCP|ADV, mincourses=1, greedy=True)
+  degree.add_group(elec)
 
-  # one advanced elective
-  if speccode in set(['PM', 'ANU', 'CSE', 'OR']):
-    elec = dpr.Group("Additional Elective(s)")
-    elec.add_requirement("Extra Math 3000+", IPRF|ISCP|ADV, mincourses=1, greedy=True)
-    degree.add_group(elec)
-
-  #return
   return degree
 
 
