@@ -40,6 +40,7 @@ GPAlookup['W'] = 0.0
 GPAlookup['I'] = 0.0
 GPAlookup['P'] = 0.0
 GPAlookup['S'] = 0.0
+GPAlookup['S-'] = 0.0
 GPAlookup['NC'] = 0.0
 
 # excluded courses for which no credit was awarded
@@ -56,8 +57,9 @@ GPAlookup['TF'] = 0.0
 
 
 GPAgrades  = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
-catt_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F', 'P', 'S'])
-cawd_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'P', 'S'])
+catt_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F', 'P', 'S', 'S-'])
+cawd_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'P', 'S', 'S-'])
+major_grades = set(['NOW', 'CR', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'P', 'S'])
 gpts_grades = set(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'])
 
 
@@ -308,7 +310,7 @@ def outside_interests(student, coursehistory, cutoff=6):
   cox_set = set(['ACCT', 'FINA', 'ITOM', 'MKTG', 'BL', 'BLI'])
 
   student_department = student.degree.split('-')[0]
-  dept_list = [a.dept for a in coursehistory if (a.dept != student_department and GPAlookup[a.grade] > 1.5)]
+  dept_list = [a.dept for a in coursehistory if (a.dept != student_department and a.grade in cawd_grades)]
   dept_list = ['COX' if a in cox_set else a for a in dept_list]    
 
   dept_dict = Counter(dept_list)
@@ -438,7 +440,7 @@ class Requirement:
     # first find satisfying courses that are *also* in the verification lists
     templist = []
     for course in vercourses:
-      satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and GPAlookup[cc.grade] > 1.5)]
+      satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and cc.grade in major_grades)]
       if satisfying_course != []:
         templist.append(satisfying_course[0])
     templist.sort(key = lambda course: (course.term, course.code))
@@ -447,7 +449,7 @@ class Requirement:
     # now find satisfying courses that are *not* in the verification list
     templist = []
     for course in self.courselist - vercourses:
-      satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and GPAlookup[cc.grade] > 1.5)]
+      satisfying_course = [cc for cc in coursehistory if (cc.code == course and cc.credits > 0 and cc.grade in major_grades)]
       if satisfying_course != []:
         templist.append(satisfying_course[0])
     templist.sort(key = lambda course: (course.term, course.code))
